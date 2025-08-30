@@ -20,7 +20,7 @@ export default function FilterPill({ label, active, onPress }) {
       }}
     >
       <Text style={{ color: active ? '#fff' : '#d6dee5', fontWeight: '700', fontSize: 13 }}>
-        {label}
+        <Text>{label}</Text>
       </Text>
     </TouchableOpacity>
   );

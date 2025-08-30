@@ -1,57 +1,183 @@
 // src/navigation/MainTabs.js
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import HomeScreen from '../screens/HomeScreen';
-const ProfilScreen = () => null;
+import { Platform, View, Text, StyleSheet } from 'react-native';
+
+import Home from '../screens/Home';
+import PropertyDetail from '../screens/PropertyDetail';
+import DemandPool from '../screens/DemandPool';
+import Calendar from '../screens/Calendar';
+import AddPortfolio from '../screens/AddPortfolio';
 
 const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
 
-export default function MainTabs() {
+// Placeholder components for screens that don't exist yet
+const PlaceholderScreen = React.memo(({ title }) => (
+  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#07141e' }}>
+    <Text style={{ color: '#fff', fontSize: 18 }}>
+      <Text>{title}</Text>
+    </Text>
+  </View>
+));
+
+// Screen components
+const ProfileScreen = React.memo(() => <PlaceholderScreen title="Profil" />);
+
+function TabNavigator() {
   return (
     <Tab.Navigator
       initialRouteName="Ana Sayfa"
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarShowLabel: true,
-        tabBarActiveTintColor: '#ff2d2d',
-        tabBarInactiveTintColor: '#8aa0b2',
+        tabBarActiveTintColor: '#ffffff',
+        tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.6)',
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
-          marginBottom: 6,
+          marginBottom: Platform.OS === 'ios' ? 0 : 2,
+          marginTop: 2,
         },
         tabBarStyle: {
           position: 'absolute',
-          height: 64,
-          paddingTop: 6,
-          paddingBottom: 6,
-          marginHorizontal: 10,
-          marginBottom: 8,
-          borderRadius: 16,
-          backgroundColor: 'rgba(7,20,30,0.92)',
+          height: Platform.OS === 'ios' ? 88 : 70,
+          paddingTop: Platform.OS === 'ios' ? 8 : 4,
+          paddingBottom: Platform.OS === 'ios' ? 20 : 8,
+          marginHorizontal: 16,
+          marginBottom: Platform.OS === 'ios' ? 8 : 6,
+          borderRadius: 20,
+          backgroundColor: '#ff0000', // Tam kırmızı - GitHub projesindeki renk
           borderTopWidth: 0,
-          borderColor: 'rgba(255,45,45,0.35)',
-          elevation: 12,
-          shadowColor: '#000',
-          shadowOpacity: 0.25,
-          shadowRadius: 8,
-          shadowOffset: { width: 0, height: 2 },
+          borderWidth: 0,
+          elevation: Platform.OS === 'android' ? 12 : 0,
+          shadowColor: '#ff0000',
+          shadowOpacity: 0.4,
+          shadowRadius: 15,
+          shadowOffset: { width: 0, height: 8 },
+          // Android optimizations
+          ...(Platform.OS === 'android' && {
+            overflow: 'hidden',
+            elevation: 12,
+          }),
         },
-        tabBarIcon: ({ focused, color }) => {
-          let name = 'home-outline';
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName;
+
           if (route.name === 'Ana Sayfa') {
-            name = focused ? 'home' : 'home-outline';
+            iconName = focused ? 'home' : 'home-outline';
+          } else if (route.name === 'Portföy Ekle') {
+            iconName = focused ? 'add-circle' : 'add-circle-outline';
+          } else if (route.name === 'Talep Ekle') {
+            iconName = focused ? 'document-text' : 'document-text-outline';
+          } else if (route.name === 'Talep Havuzu') {
+            iconName = focused ? 'people' : 'people-outline';
           } else if (route.name === 'Profil') {
-            name = focused ? 'person' : 'person-outline';
+            iconName = focused ? 'person' : 'person-outline';
           }
-          return <Ionicons name={name} size={22} color={color} />;
+
+          return (
+            <View style={styles.iconContainer}>
+              <Text style={[styles.tabIcon, { color }]}>
+                {iconName === 'home' || iconName === 'home-outline' ? (
+                  <Text>H</Text>
+                ) : iconName === 'add-circle' || iconName === 'add-circle-outline' ? (
+                  <Text>+</Text>
+                ) : iconName === 'document-text' || iconName === 'document-text-outline' ? (
+                  <Text>D</Text>
+                ) : iconName === 'people' || iconName === 'people-outline' ? (
+                  <Text>P</Text>
+                ) : iconName === 'person' || iconName === 'person-outline' ? (
+                  <Text>U</Text>
+                ) : (
+                  <Text>H</Text>
+                )}
+              </Text>
+              {focused && <View style={styles.activeIndicator} />}
+            </View>
+          );
         },
+        // Android specific optimizations
+        ...(Platform.OS === 'android' && {
+          tabBarHideOnKeyboard: true,
+          tabBarPressColor: 'rgba(255, 255, 255, 0.2)',
+          tabBarPressOpacity: 0.8,
+        }),
       })}
     >
-      <Tab.Screen name="Ana Sayfa" component={HomeScreen} />
-      <Tab.Screen name="Profil" component={ProfilScreen} />
+      <Tab.Screen 
+        name="Ana Sayfa" 
+        component={Home}
+        options={{
+          tabBarLabel: 'Ana Sayfa',
+        }}
+      />
+      
+      <Tab.Screen 
+        name="Portföy Ekle" 
+        component={AddPortfolio}
+        options={{
+          tabBarLabel: 'Portföy Ekle',
+        }}
+      />
+      
+      <Tab.Screen 
+        name="Takvim" 
+        component={Calendar}
+        options={{
+          tabBarLabel: 'Takvim',
+        }}
+      />
+      
+      <Tab.Screen 
+        name="Talep Havuzu" 
+        component={DemandPool}
+        options={{
+          tabBarLabel: 'Talep Havuzu',
+        }}
+      />
+      
+      <Tab.Screen 
+        name="Profil" 
+        component={ProfileScreen}
+        options={{
+          tabBarLabel: 'Profil',
+        }}
+      />
     </Tab.Navigator>
   );
 }
+
+export default function MainTabs() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <Stack.Screen name="TabNavigator" component={TabNavigator} />
+      <Stack.Screen name="PropertyDetail" component={PropertyDetail} />
+    </Stack.Navigator>
+  );
+}
+
+const styles = StyleSheet.create({
+  iconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  tabIcon: {
+    fontSize: Platform.OS === 'ios' ? 24 : 22,
+  },
+  activeIndicator: {
+    position: 'absolute',
+    bottom: -8,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#ffffff',
+  },
+});
