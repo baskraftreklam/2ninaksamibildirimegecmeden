@@ -1,79 +1,228 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# 🏠 Talepify Mobile App
 
-# Getting Started
+**Modern React Native Real Estate Management Application**
 
->**Note**: Make sure you have completed the [React Native - Environment Setup](https://reactnative.dev/docs/environment-setup) instructions till "Creating a new application" step, before proceeding.
+[![React Native](https://img.shields.io/badge/React%20Native-0.72+-blue.svg)](https://reactnative.dev/)
+[![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS-green.svg)](https://reactnative.dev/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## Step 1: Start the Metro Server
+## 📱 Proje Hakkında
 
-First, you will need to start **Metro**, the JavaScript _bundler_ that ships _with_ React Native.
+Talepify Mobile App, emlak sektörü için geliştirilmiş modern bir React Native uygulamasıdır. Kullanıcıların portföy yönetimi, müşteri talepleri, randevu takibi ve harita entegrasyonu gibi özellikleri kullanmasını sağlar.
 
-To start Metro, run the following command from the _root_ of your React Native project:
+## ✨ Özellikler
 
+### 🏠 **Portföy Yönetimi**
+- Portföy listeleme ve detay görüntüleme
+- Yeni portföy ekleme formu
+- Arama ve filtreleme sistemi
+- Favori portföyler
+- Resim galerisi
+
+### 📞 **İletişim Entegrasyonu**
+- WhatsApp mesajlaşma
+- Telefon arama
+- E-posta gönderme
+- Sosyal medya linkleri
+
+### 🗺️ **Harita Entegrasyonu**
+- Konum gösterimi
+- Harita seçici
+- Koordinat girişi
+- Hızlı konum seçimi
+
+### 📅 **Takvim ve Randevu**
+- Haftalık takvim görünümü
+- Randevu ekleme/düzenleme
+- Randevu hatırlatmaları
+
+### 📋 **Talep Havuzu**
+- Müşteri talepleri listesi
+- Talep detayları
+- Durum takibi
+
+### 🎨 **Modern UI/UX**
+- Koyu tema desteği
+- Tam kırmızı (#ff0000) renk teması
+- Responsive tasarım
+- Smooth animasyonlar
+
+## 🚀 Kurulum
+
+### Gereksinimler
+- Node.js (v16 veya üzeri)
+- React Native CLI
+- Android Studio (Android için)
+- Xcode (iOS için)
+
+### Adımlar
+
+1. **Repository'yi klonlayın**
 ```bash
-# using npm
-npm start
-
-# OR using Yarn
-yarn start
+git clone https://github.com/baskraftreklam/YeniReactappTalepify.git
+cd YeniReactappTalepify
 ```
 
-## Step 2: Start your Application
-
-Let Metro Bundler run in its _own_ terminal. Open a _new_ terminal from the _root_ of your React Native project. Run the following command to start your _Android_ or _iOS_ app:
-
-### For Android
-
+2. **Bağımlılıkları yükleyin**
 ```bash
-# using npm
-npm run android
-
-# OR using Yarn
-yarn android
+npm install
 ```
 
-### For iOS
-
+3. **Android için**
 ```bash
-# using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
+npx react-native run-android
 ```
 
-If everything is set up _correctly_, you should see your new app running in your _Android Emulator_ or _iOS Simulator_ shortly provided you have set up your emulator/simulator correctly.
+4. **iOS için**
+```bash
+cd ios && pod install && cd ..
+npx react-native run-ios
+```
 
-This is one way to run your app — you can also run it directly from within Android Studio and Xcode respectively.
+## 📁 Proje Yapısı
 
-## Step 3: Modifying your App
+```
+src/
+├── components/          # Yeniden kullanılabilir bileşenler
+│   ├── DisplayMap.js    # Harita gösterimi
+│   ├── Header.js        # Uygulama başlığı
+│   ├── ListingCard.js   # Portföy kartı
+│   ├── MapPicker.js     # Harita seçici
+│   └── SuccessModal.js  # Başarı modalı
+├── navigation/          # Navigasyon yapısı
+│   ├── MainTabs.js      # Ana tab navigasyonu
+│   └── RootNavigator.js # Kök navigasyon
+├── screens/             # Ekran bileşenleri
+│   ├── Home.js          # Ana sayfa
+│   ├── PropertyDetail.js # Portföy detayı
+│   ├── AddPortfolio.js  # Portföy ekleme
+│   ├── Calendar.js      # Takvim
+│   ├── DemandPool.js    # Talep havuzu
+│   └── ...
+├── services/            # Servis katmanı
+│   └── firestore.js     # Firebase entegrasyonu
+├── theme/               # Tema sistemi
+│   └── theme.js         # Renk ve stil tanımları
+└── utils/               # Yardımcı fonksiyonlar
+    └── contactUtils.js  # İletişim yardımcıları
+```
 
-Now that you have successfully run the app, let's modify it.
+## 🎨 Tema Sistemi
 
-1. Open `App.tsx` in your text editor of choice and edit some lines.
-2. For **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Developer Menu** (<kbd>Ctrl</kbd> + <kbd>M</kbd> (on Window and Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (on macOS)) to see your changes!
+Uygulama, tutarlı bir tasarım için merkezi tema sistemi kullanır:
 
-   For **iOS**: Hit <kbd>Cmd ⌘</kbd> + <kbd>R</kbd> in your iOS Simulator to reload the app and see your changes!
+```javascript
+// src/theme/theme.js
+export const theme = {
+  colors: {
+    primary: '#ff0000',        // Ana kırmızı renk
+    background: '#07141e',     // Koyu arka plan
+    cardBg: '#0f1a23',         // Kart arka planı
+    text: '#ffffff',           // Ana metin
+    textSecondary: '#cccccc',  // İkincil metin
+    border: 'rgba(255,255,255,0.1)', // Kenarlık
+  },
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 12,
+    lg: 16,
+    xl: 24,
+    xxl: 32,
+  },
+  borderRadius: {
+    sm: 4,
+    md: 8,
+    lg: 12,
+    xl: 16,
+  }
+};
+```
 
-## Congratulations! :tada:
+## 📱 Ekranlar
 
-You've successfully run and modified your React Native App. :partying_face:
+### 🏠 Ana Sayfa (Home)
+- Portföy listesi
+- Arama ve filtreleme
+- Pull-to-refresh
+- Favori sistemi
 
-### Now what?
+### 📄 Portföy Detayı (PropertyDetail)
+- Resim galerisi
+- Özellik listesi
+- Konum haritası
+- İletişim butonları
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [Introduction to React Native](https://reactnative.dev/docs/getting-started).
+### ➕ Portföy Ekleme (AddPortfolio)
+- Kapsamlı form
+- Harita seçici
+- Resim yükleme
+- Validasyon
 
-# Troubleshooting
+### 📅 Takvim (Calendar)
+- Haftalık görünüm
+- Randevu yönetimi
+- Modal form
 
-If you can't get this to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+### 📋 Talep Havuzu (DemandPool)
+- Müşteri talepleri
+- Durum filtreleme
+- Detay görüntüleme
 
-# Learn More
+## 🔧 Teknik Özellikler
 
-To learn more about React Native, take a look at the following resources:
+### 📦 Kullanılan Teknolojiler
+- **React Native** - Cross-platform mobil geliştirme
+- **React Navigation** - Navigasyon sistemi
+- **Firebase** - Backend servisleri (mock)
+- **Animated API** - Smooth animasyonlar
+- **Linking API** - Harici uygulama entegrasyonu
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+### 🎯 Performans Optimizasyonları
+- React.memo kullanımı
+- useCallback ve useMemo hooks
+- Lazy loading
+- Image optimization
+
+### 🔒 Güvenlik
+- Input validasyonu
+- Error handling
+- Safe area handling
+
+## 🚀 Gelecek Özellikler
+
+- [ ] Push notifications
+- [ ] Offline mode
+- [ ] Multi-language support
+- [ ] Advanced analytics
+- [ ] Payment integration
+- [ ] Video integration
+- [ ] Advanced search filters
+
+## 🤝 Katkıda Bulunma
+
+1. Fork yapın
+2. Feature branch oluşturun (`git checkout -b feature/AmazingFeature`)
+3. Değişikliklerinizi commit edin (`git commit -m 'Add some AmazingFeature'`)
+4. Branch'inizi push edin (`git push origin feature/AmazingFeature`)
+5. Pull Request oluşturun
+
+## 📄 Lisans
+
+Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICENSE) dosyasına bakın.
+
+## 📞 İletişim
+
+- **Proje Sahibi:** [@baskraftreklam](https://github.com/baskraftreklam)
+- **E-posta:** info@talepify.com
+- **Website:** [talepify.com](https://talepify.com)
+
+## 🙏 Teşekkürler
+
+- React Native ekibine
+- React Navigation ekibine
+- Tüm katkıda bulunanlara
+
+---
+
+**⭐ Bu projeyi beğendiyseniz yıldız vermeyi unutmayın!**
