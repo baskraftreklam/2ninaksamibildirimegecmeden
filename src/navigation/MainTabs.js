@@ -15,6 +15,7 @@ import Packages from '../screens/Packages';
 import Payment from '../screens/Payment';
 import RequestForm from '../screens/RequestForm';
 import RequestList from '../screens/RequestList';
+import EditProfile from '../screens/EditProfile';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -29,7 +30,7 @@ const PlaceholderScreen = React.memo(({ title }) => (
 ));
 
 // Screen components
-const ProfileScreen = React.memo(() => <PlaceholderScreen title="Profil" />);
+import Profile from '../screens/Profile';
 
 function TabNavigator() {
   return (
@@ -152,13 +153,13 @@ function TabNavigator() {
         }}
       />
       
-      <Tab.Screen 
-        name="Profil" 
-        component={ProfileScreen}
-        options={{
-          tabBarLabel: 'Profil',
-        }}
-      />
+                        <Tab.Screen
+                    name="Profil"
+                    component={Profile}
+                    options={{
+                      tabBarLabel: 'Profil',
+                    }}
+                  />
     </Tab.Navigator>
   );
 }
@@ -177,6 +178,7 @@ export default function MainTabs() {
       <Stack.Screen name="Payment" component={Payment} />
       <Stack.Screen name="RequestForm" component={RequestForm} />
       <Stack.Screen name="RequestList" component={RequestList} />
+      <Stack.Screen name="EditProfile" component={EditProfile} />
     </Stack.Navigator>
   );
 }
