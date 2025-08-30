@@ -17,6 +17,7 @@ import {
   ActivityIndicator,
   TextInput,
   Animated,
+  RefreshControl,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Header from '../components/Header';

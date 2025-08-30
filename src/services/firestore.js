@@ -1,116 +1,89 @@
-// src/services/firestore.js
-// Mock data kullanıyoruz - Hermes uyumluluk sorunu nedeniyle
-
-/**
- * Esnek portföy çekimi:
- * - Koleksiyon: talepifyproje
- * - docType 'portfolio' OLANLARI tercih eder.
- * - Ama docType YOKSA da portföy benzeri kayıtları (title/price/city alanları olan) "olasılık" olarak kabul eder.
- * - isPublished === false olanları eler.
- * - createdAt varsa tarihe göre sıralar; yoksa gelen sıra.
- */
-export async function getPortfolios() {
-  // Mock data
-  const mockData = [
+// Mock firestore service for now
+export const fetchPortfolios = async () => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Return mock data
+  return [
     {
       id: '1',
-      title: 'Lüks Villa - Beşiktaş',
-      city: 'İstanbul',
-      price: '2.500.000 ₺',
-      status: 'satılık',
-      ptype: 'villa',
-      docType: 'portfolio',
-      isPublished: true,
-      createdAt: new Date('2024-01-15')
+      title: 'Atakum Denizevleri Satılık Daire',
+      city: 'Samsun',
+      district: 'Atakum',
+      neighborhood: 'Denizevleri',
+      price: 2500000,
+      listingStatus: 'Satılık',
+      propertyType: 'Daire',
+      squareMeters: 120,
+      roomCount: '3+1',
+      buildingAge: 5,
+      floor: 3,
+      parking: true,
+      images: ['https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1600&auto=format&fit=crop']
     },
     {
       id: '2',
-      title: 'Modern Daire - Kadıköy',
-      city: 'İstanbul',
-      price: '850.000 ₺',
-      status: 'satılık',
-      ptype: 'daire',
-      docType: 'portfolio',
-      isPublished: true,
-      createdAt: new Date('2024-01-14')
+      title: 'İlkadım Merkez Kiralık Daire',
+      city: 'Samsun',
+      district: 'İlkadım',
+      neighborhood: 'Merkez',
+      price: 8500,
+      listingStatus: 'Kiralık',
+      propertyType: 'Daire',
+      squareMeters: 85,
+      roomCount: '2+1',
+      buildingAge: 8,
+      floor: 2,
+      parking: false,
+      images: ['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1600&auto=format&fit=crop']
     },
     {
       id: '3',
-      title: 'Günlük Kiralık - Sultanahmet',
-      city: 'İstanbul',
-      price: '500 ₺/gün',
-      status: 'günlük',
-      ptype: 'daire',
-      docType: 'portfolio',
-      isPublished: true,
-      createdAt: new Date('2024-01-13')
+      title: 'Canik Villa Satılık',
+      city: 'Samsun',
+      district: 'Canik',
+      neighborhood: 'Villa Mahallesi',
+      price: 4500000,
+      listingStatus: 'Satılık',
+      propertyType: 'Villa',
+      squareMeters: 200,
+      roomCount: '4+2',
+      buildingAge: 3,
+      floor: 2,
+      parking: true,
+      images: ['https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=1600&auto=format&fit=crop']
     },
     {
       id: '4',
-      title: 'İşyeri - Şişli',
-      city: 'İstanbul',
-      price: '15.000 ₺/ay',
-      status: 'kiralık',
-      ptype: 'işyeri',
-      docType: 'portfolio',
-      isPublished: true,
-      createdAt: new Date('2024-01-12')
+      title: 'Tekkeköy İş Yeri Kiralık',
+      city: 'Samsun',
+      district: 'Tekkeköy',
+      neighborhood: 'Ticaret Merkezi',
+      price: 12000,
+      listingStatus: 'Kiralık',
+      propertyType: 'İş Yeri',
+      squareMeters: 150,
+      roomCount: null,
+      buildingAge: 10,
+      floor: 1,
+      parking: true,
+      images: ['https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=1600&auto=format&fit=crop']
     },
     {
       id: '5',
-      title: 'Arsa - Çeşme',
-      city: 'İzmir',
-      price: '1.200.000 ₺',
-      status: 'satılık',
-      ptype: 'arsa',
-      docType: 'portfolio',
-      isPublished: true,
-      createdAt: new Date('2024-01-11')
+      title: 'Bafra Sahil Daire Satılık',
+      city: 'Samsun',
+      district: 'Bafra',
+      neighborhood: 'Sahil Mahallesi',
+      price: 1800000,
+      listingStatus: 'Satılık',
+      propertyType: 'Daire',
+      squareMeters: 95,
+      roomCount: '2+1',
+      buildingAge: 2,
+      floor: 5,
+      parking: true,
+      images: ['https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=1600&auto=format&fit=crop']
     }
   ];
-
-  // 1) docType 'portfolio' olanlar
-  let portfolios = mockData.filter((x) => {
-    const dt = String(x?.docType ?? '').toLowerCase();
-    return dt === 'portfolio';
-  });
-
-  // 2) Eğer hiç yoksa, portföy benzeri kayıtları yakala (title/baslik + city/sehir + price vb.)
-  if (portfolios.length === 0) {
-    portfolios = mockData.filter((x) => {
-      const hasTitle = x?.title || x?.baslik;
-      const hasLoc = x?.city || x?.sehir || x?.il;
-      const maybePrice = x?.price || x?.fiyat;
-      return hasTitle && (hasLoc || typeof maybePrice !== 'undefined');
-    });
-  }
-
-  // 3) Yayınlama filtresi (isPublished === false olanları çıkar)
-  portfolios = portfolios.filter((x) => x?.isPublished !== false);
-
-  // 4) Görsel/başlık alanlarını normalize et (HomeScreen kartları için)
-  portfolios = portfolios.map((p) => {
-    const cover =
-      p?.cover ||
-      p?.image ||
-      (Array.isArray(p?.images) && p.images.length ? p.images[0] : undefined);
-
-    return {
-      id: p.id,
-      title: p.title || p.baslik || 'Portföy',
-      price: typeof p.fiyat !== 'undefined' ? p.fiyat : p.price,
-      city: p.city || p.sehir || p.il,
-      district: p.district || p.ilce,
-      listingType: p.listingType || p.kategori || p.tur || p.type || p.adType || p.status,
-      isPublished: p.isPublished,
-      cover,
-      createdAt: p.createdAt || null,
-      _raw: p,
-    };
-  });
-
-  // Debug log: konsolda kaç kayıt geldi görelim
-  console.log('[Mock Firestore] talepifyproje total:', mockData.length, '→ portfolios:', portfolios.length);
-
-  return portfolios;
-}
+};

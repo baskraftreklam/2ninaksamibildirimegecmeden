@@ -1,3 +1,6 @@
 // src/services/index.js
-export * from './firestore';
-export { default as firestoreApi } from './firestore';
+import { showSuccess as showSuccessModal } from '../components/SuccessModal';
+
+export const showSuccess = (message) => {
+  showSuccessModal(message);
+};
