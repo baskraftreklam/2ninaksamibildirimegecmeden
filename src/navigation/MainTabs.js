@@ -10,6 +10,11 @@ import PropertyDetail from '../screens/PropertyDetail';
 import DemandPool from '../screens/DemandPool';
 import Calendar from '../screens/Calendar';
 import AddPortfolio from '../screens/AddPortfolio';
+import Subscription from '../screens/Subscription';
+import Packages from '../screens/Packages';
+import Payment from '../screens/Payment';
+import RequestForm from '../screens/RequestForm';
+import RequestList from '../screens/RequestList';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -86,7 +91,7 @@ function TabNavigator() {
                 ) : iconName === 'add-circle' || iconName === 'add-circle-outline' ? (
                   <Text>+</Text>
                 ) : iconName === 'document-text' || iconName === 'document-text-outline' ? (
-                  <Text>D</Text>
+                  <Text>📝</Text>
                 ) : iconName === 'people' || iconName === 'people-outline' ? (
                   <Text>P</Text>
                 ) : iconName === 'person' || iconName === 'person-outline' ? (
@@ -120,6 +125,14 @@ function TabNavigator() {
         component={AddPortfolio}
         options={{
           tabBarLabel: 'Portföy Ekle',
+        }}
+      />
+      
+      <Tab.Screen 
+        name="Talep Ekle" 
+        component={RequestForm}
+        options={{
+          tabBarLabel: 'Talep Ekle',
         }}
       />
       
@@ -159,6 +172,11 @@ export default function MainTabs() {
     >
       <Stack.Screen name="TabNavigator" component={TabNavigator} />
       <Stack.Screen name="PropertyDetail" component={PropertyDetail} />
+      <Stack.Screen name="Subscription" component={Subscription} />
+      <Stack.Screen name="Packages" component={Packages} />
+      <Stack.Screen name="Payment" component={Payment} />
+      <Stack.Screen name="RequestForm" component={RequestForm} />
+      <Stack.Screen name="RequestList" component={RequestList} />
     </Stack.Navigator>
   );
 }
