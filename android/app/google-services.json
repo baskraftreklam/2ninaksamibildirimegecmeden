@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "75559979600",
+    "project_id": "talepify-34470",
+    "storage_bucket": "talepify-34470.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:75559979600:android:a793e1d878bdb5f275df55",
+        "android_client_info": {
+          "package_name": "com.talepifyapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDy7M4LPmV5PTK7oubysXymDp-x3chlQU4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
