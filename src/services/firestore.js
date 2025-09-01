@@ -19,7 +19,8 @@ export const fetchPortfolios = async () => {
       buildingAge: 5,
       floor: 3,
       parking: true,
-      images: ['https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1600&auto=format&fit=crop']
+      images: ['https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1600&auto=format&fit=crop'],
+      cover: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1600&auto=format&fit=crop'
     },
     {
       id: '2',
@@ -35,7 +36,8 @@ export const fetchPortfolios = async () => {
       buildingAge: 8,
       floor: 2,
       parking: false,
-      images: ['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1600&auto=format&fit=crop']
+      images: ['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1600&auto=format&fit=crop'],
+      cover: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1600&auto=format&fit=crop'
     },
     {
       id: '3',
@@ -51,7 +53,8 @@ export const fetchPortfolios = async () => {
       buildingAge: 3,
       floor: 2,
       parking: true,
-      images: ['https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=1600&auto=format&fit=crop']
+      images: ['https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=1600&auto=format&fit=crop'],
+      cover: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=1600&auto=format&fit=crop'
     },
     {
       id: '4',
@@ -67,7 +70,8 @@ export const fetchPortfolios = async () => {
       buildingAge: 10,
       floor: 1,
       parking: true,
-      images: ['https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=1600&auto=format&fit=crop']
+      images: ['https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=1600&auto=format&fit=crop'],
+      cover: 'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=1600&auto=format&fit=crop'
     },
     {
       id: '5',
@@ -83,7 +87,8 @@ export const fetchPortfolios = async () => {
       buildingAge: 2,
       floor: 5,
       parking: true,
-      images: ['https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=1600&auto=format&fit=crop']
+      images: ['https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=1600&auto=format&fit=crop'],
+      cover: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=1600&auto=format&fit=crop'
     }
   ];
 };

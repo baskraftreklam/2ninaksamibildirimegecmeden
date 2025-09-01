@@ -1,66 +1,60 @@
-# 🏠 Talepify Mobile App
+# TalepifyApp - React Native Portföy Yönetim Uygulaması
 
-**Modern React Native Real Estate Management Application**
+Bu proje, GitHub'daki [NAT-VE-GECMEDEN](https://github.com/baskraftreklam/NAT-VE-GECMEDEN.git) projesinden esinlenerek geliştirilmiş, React Native ile yazılmış bir portföy yönetim uygulamasıdır.
 
-[![React Native](https://img.shields.io/badge/React%20Native-0.72+-blue.svg)](https://reactnative.dev/)
-[![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS-green.svg)](https://reactnative.dev/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+## 🚀 Özellikler
 
-## 📱 Proje Hakkında
+### 🔐 Kimlik Doğrulama Sistemi
+- Firebase Authentication entegrasyonu
+- Kullanıcı kayıt ve giriş
+- Rol tabanlı yetkilendirme (Üye, Yönetici, Süper Yönetici)
+- Güvenli rota koruması
 
-Talepify Mobile App, emlak sektörü için geliştirilmiş modern bir React Native uygulamasıdır. Kullanıcıların portföy yönetimi, müşteri talepleri, randevu takibi ve harita entegrasyonu gibi özellikleri kullanmasını sağlar.
+### 📱 Portföy Yönetimi
+- Portföy ekleme, düzenleme ve silme
+- Görsel yönetimi
+- Durum takibi (Aktif, Beklemede, Pasif)
+- Detaylı portföy bilgileri
 
-## ✨ Özellikler
+### 🎯 Akıllı Eşleştirme Sistemi
+- Konum bazlı eşleştirme
+- Fiyat uyumluluğu analizi
+- Özellik bazlı eşleştirme
+- Uyumluluk skoru hesaplama
 
-### 🏠 **Portföy Yönetimi**
-- Portföy listeleme ve detay görüntüleme
-- Yeni portföy ekleme formu
-- Arama ve filtreleme sistemi
-- Favori portföyler
-- Resim galerisi
+### 💳 Abonelik Sistemi
+- Farklı plan seçenekleri (Ücretsiz, Temel, Premium, Kurumsal)
+- Plan yükseltme ve düşürme
+- Kullanım limitleri
+- Otomatik yenileme
 
-### 📞 **İletişim Entegrasyonu**
-- WhatsApp mesajlaşma
-- Telefon arama
-- E-posta gönderme
-- Sosyal medya linkleri
+### 🛡️ Güvenlik ve Yetkilendirme
+- MemberRoute - Sadece üyeler için
+- SuperAdminRoute - Sadece süper yöneticiler için
+- Güvenli veri erişimi
 
-### 🗺️ **Harita Entegrasyonu**
-- Konum gösterimi
-- Harita seçici
-- Koordinat girişi
-- Hızlı konum seçimi
+## 🛠️ Teknolojiler
 
-### 📅 **Takvim ve Randevu**
-- Haftalık takvim görünümü
-- Randevu ekleme/düzenleme
-- Randevu hatırlatmaları
+- **React Native** - Mobil uygulama geliştirme
+- **Firebase** - Backend ve kimlik doğrulama
+- **React Navigation** - Navigasyon yönetimi
+- **Context API** - Durum yönetimi
+- **UI Kitten** - UI bileşenleri
 
-### 📋 **Talep Havuzu**
-- Müşteri talepleri listesi
-- Talep detayları
-- Durum takibi
-
-### 🎨 **Modern UI/UX**
-- Koyu tema desteği
-- Tam kırmızı (#ff0000) renk teması
-- Responsive tasarım
-- Smooth animasyonlar
-
-## 🚀 Kurulum
+## 📦 Kurulum
 
 ### Gereksinimler
-- Node.js (v16 veya üzeri)
+- Node.js (>=18)
 - React Native CLI
-- Android Studio (Android için)
-- Xcode (iOS için)
+- Android Studio / Xcode
+- Firebase projesi
 
 ### Adımlar
 
-1. **Repository'yi klonlayın**
+1. **Projeyi klonlayın**
 ```bash
-git clone https://github.com/baskraftreklam/YeniReactappTalepify.git
-cd YeniReactappTalepify
+git clone <repository-url>
+cd TalepifyApp
 ```
 
 2. **Bağımlılıkları yükleyin**
@@ -68,161 +62,122 @@ cd YeniReactappTalepify
 npm install
 ```
 
-3. **Android için**
+3. **Firebase yapılandırması**
+- Firebase Console'dan yeni proje oluşturun
+- `google-services.json` (Android) ve `GoogleService-Info.plist` (iOS) dosyalarını indirin
+- Proje klasörlerine yerleştirin
+
+4. **Uygulamayı çalıştırın**
 ```bash
-npx react-native run-android
+# Android
+npm run android
+
+# iOS
+npm run ios
 ```
 
-4. **iOS için**
-```bash
-cd ios && pod install && cd ..
-npx react-native run-ios
-```
-
-## 📁 Proje Yapısı
+## 🏗️ Proje Yapısı
 
 ```
 src/
 ├── components/          # Yeniden kullanılabilir bileşenler
-│   ├── DisplayMap.js    # Harita gösterimi
-│   ├── Header.js        # Uygulama başlığı
-│   ├── ListingCard.js   # Portföy kartı
-│   ├── MapPicker.js     # Harita seçici
-│   └── SuccessModal.js  # Başarı modalı
-├── navigation/          # Navigasyon yapısı
-│   ├── MainTabs.js      # Ana tab navigasyonu
-│   └── RootNavigator.js # Kök navigasyon
-├── screens/             # Ekran bileşenleri
-│   ├── Home.js          # Ana sayfa
-│   ├── PropertyDetail.js # Portföy detayı
-│   ├── AddPortfolio.js  # Portföy ekleme
-│   ├── Calendar.js      # Takvim
-│   ├── DemandPool.js    # Talep havuzu
-│   └── ...
-├── services/            # Servis katmanı
-│   └── firestore.js     # Firebase entegrasyonu
-├── theme/               # Tema sistemi
-│   └── theme.js         # Renk ve stil tanımları
+│   ├── PortfolioCard.js    # Portföy kartı
+│   ├── DisplayMap.js       # Harita görüntüleme
+│   ├── Header.js           # Başlık bileşeni
+│   ├── MemberRoute.js      # Üye rota koruması
+│   └── SuperAdminRoute.js  # Süper admin rota koruması
+├── context/             # Context API
+│   └── AuthContext.js      # Kimlik doğrulama durumu
+├── navigation/          # Navigasyon
+│   ├── MainTabs.js         # Ana tab navigasyonu
+│   └── RootNavigator.js    # Kök navigasyon
+├── screens/             # Ekranlar
+│   ├── PortfolioList.js    # Portföy listesi
+│   ├── AddPortfolio.js     # Portföy ekleme
+│   ├── Home.js             # Ana sayfa
+│   └── Profile.js          # Profil
+├── services/            # Servisler
+│   ├── firebase.js         # Firebase yapılandırması
+│   └── firestore.js        # Firestore işlemleri
+├── theme/               # Tema ve stiller
+│   ├── theme.js            # Tema yapılandırması
+│   └── theme.json          # Tema verileri
 └── utils/               # Yardımcı fonksiyonlar
-    └── contactUtils.js  # İletişim yardımcıları
+    ├── matchingLogic.js    # Eşleştirme algoritması
+    └── subscription.js     # Abonelik sistemi
 ```
 
-## 🎨 Tema Sistemi
+## 🔧 Yapılandırma
 
-Uygulama, tutarlı bir tasarım için merkezi tema sistemi kullanır:
+### Firebase Yapılandırması
+`src/services/firebase.js` dosyasında Firebase yapılandırmanızı güncelleyin:
 
 ```javascript
-// src/theme/theme.js
-export const theme = {
-  colors: {
-    primary: '#ff0000',        // Ana kırmızı renk
-    background: '#07141e',     // Koyu arka plan
-    cardBg: '#0f1a23',         // Kart arka planı
-    text: '#ffffff',           // Ana metin
-    textSecondary: '#cccccc',  // İkincil metin
-    border: 'rgba(255,255,255,0.1)', // Kenarlık
-  },
-  spacing: {
-    xs: 4,
-    sm: 8,
-    md: 12,
-    lg: 16,
-    xl: 24,
-    xxl: 32,
-  },
-  borderRadius: {
-    sm: 4,
-    md: 8,
-    lg: 12,
-    xl: 16,
-  }
+import { initializeApp } from 'firebase/app';
+
+const firebaseConfig = {
+  apiKey: "your-api-key",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project.appspot.com",
+  messagingSenderId: "your-sender-id",
+  appId: "your-app-id"
 };
+
+const app = initializeApp(firebaseConfig);
 ```
 
-## 📱 Ekranlar
+### Tema Yapılandırması
+`src/theme/theme.js` dosyasında renk ve stil ayarlarını özelleştirebilirsiniz.
 
-### 🏠 Ana Sayfa (Home)
-- Portföy listesi
-- Arama ve filtreleme
-- Pull-to-refresh
-- Favori sistemi
+## 📱 Kullanım
 
-### 📄 Portföy Detayı (PropertyDetail)
-- Resim galerisi
-- Özellik listesi
-- Konum haritası
-- İletişim butonları
+### Portföy Ekleme
+1. "Portföy Ekle" sekmesine gidin
+2. Gerekli bilgileri doldurun
+3. Görselleri ekleyin
+4. Kaydedin
 
-### ➕ Portföy Ekleme (AddPortfolio)
-- Kapsamlı form
-- Harita seçici
-- Resim yükleme
-- Validasyon
+### Eşleştirme
+1. "Portföyler" sekmesinde portföylerinizi görüntüleyin
+2. Sistem otomatik olarak uyumlu portföyleri önerir
+3. Uyumluluk skorlarına göre sıralama yapın
 
-### 📅 Takvim (Calendar)
-- Haftalık görünüm
-- Randevu yönetimi
-- Modal form
+### Abonelik Yönetimi
+1. "Profil" sekmesine gidin
+2. "Abonelik" bölümünden planınızı yönetin
+3. Plan yükseltme/düşürme işlemlerini yapın
 
-### 📋 Talep Havuzu (DemandPool)
-- Müşteri talepleri
-- Durum filtreleme
-- Detay görüntüleme
+## 🔒 Güvenlik
 
-## 🔧 Teknik Özellikler
-
-### 📦 Kullanılan Teknolojiler
-- **React Native** - Cross-platform mobil geliştirme
-- **React Navigation** - Navigasyon sistemi
-- **Firebase** - Backend servisleri (mock)
-- **Animated API** - Smooth animasyonlar
-- **Linking API** - Harici uygulama entegrasyonu
-
-### 🎯 Performans Optimizasyonları
-- React.memo kullanımı
-- useCallback ve useMemo hooks
-- Lazy loading
-- Image optimization
-
-### 🔒 Güvenlik
-- Input validasyonu
-- Error handling
-- Safe area handling
-
-## 🚀 Gelecek Özellikler
-
-- [ ] Push notifications
-- [ ] Offline mode
-- [ ] Multi-language support
-- [ ] Advanced analytics
-- [ ] Payment integration
-- [ ] Video integration
-- [ ] Advanced search filters
+- Tüm API çağrıları Firebase güvenlik kuralları ile korunur
+- Kullanıcı verileri şifrelenir
+- Rol tabanlı erişim kontrolü
+- Güvenli rota koruması
 
 ## 🤝 Katkıda Bulunma
 
-1. Fork yapın
-2. Feature branch oluşturun (`git checkout -b feature/AmazingFeature`)
-3. Değişikliklerinizi commit edin (`git commit -m 'Add some AmazingFeature'`)
-4. Branch'inizi push edin (`git push origin feature/AmazingFeature`)
+1. Projeyi fork edin
+2. Feature branch oluşturun (`git checkout -b feature/amazing-feature`)
+3. Değişikliklerinizi commit edin (`git commit -m 'Add amazing feature'`)
+4. Branch'inizi push edin (`git push origin feature/amazing-feature`)
 5. Pull Request oluşturun
 
 ## 📄 Lisans
 
-Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICENSE) dosyasına bakın.
+Bu proje MIT lisansı altında lisanslanmıştır.
 
 ## 📞 İletişim
 
-- **Proje Sahibi:** [@baskraftreklam](https://github.com/baskraftreklam)
-- **E-posta:** info@talepify.com
-- **Website:** [talepify.com](https://talepify.com)
+- Proje Linki: [https://github.com/baskraftreklam/NAT-VE-GECMEDEN.git](https://github.com/baskraftreklam/NAT-VE-GECMEDEN.git)
+- Sorularınız için issue açın
 
 ## 🙏 Teşekkürler
 
-- React Native ekibine
-- React Navigation ekibine
-- Tüm katkıda bulunanlara
+- [NAT-VE-GECMEDEN](https://github.com/baskraftreklam/NAT-VE-GECMEDEN.git) projesi için ilham
+- React Native topluluğu
+- Firebase ekibi
 
 ---
 
-**⭐ Bu projeyi beğendiyseniz yıldız vermeyi unutmayın!**
+**Not:** Bu proje geliştirme aşamasındadır. Production kullanımı için ek güvenlik önlemleri ve testler gereklidir.

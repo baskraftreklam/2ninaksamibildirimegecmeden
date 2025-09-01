@@ -9,7 +9,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Animated,
-  LinearGradient,
 } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
@@ -74,10 +73,7 @@ const Login = ({ navigation }) => {
   };
 
   return (
-    <LinearGradient
-      colors={['#07141e', '#0f1a23', '#1a2634']}
-      style={styles.container}
-    >
+    <View style={styles.container}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -209,13 +205,14 @@ const Login = ({ navigation }) => {
           </View>
         </Animated.View>
       </KeyboardAvoidingView>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#07141e',
   },
   keyboardView: {
     flex: 1,
@@ -270,7 +267,7 @@ const styles = StyleSheet.create({
   },
   inputIcon: {
     fontSize: 20,
-    color: '#ff4d4f',
+    color: '#E50000',
     marginRight: 12,
   },
   input: {
@@ -283,11 +280,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#ff4d4f',
+    backgroundColor: '#E50000',
     borderRadius: 12,
     paddingVertical: 16,
     marginBottom: 16,
-    shadowColor: '#ff4d4f',
+    shadowColor: '#E50000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -341,7 +338,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   resendText: {
-    color: '#ff4d4f',
+    color: '#E50000',
     fontSize: 14,
     fontWeight: '500',
   },
@@ -354,7 +351,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   linkText: {
-    color: '#ff4d4f',
+    color: '#E50000',
     fontWeight: '600',
   },
 });

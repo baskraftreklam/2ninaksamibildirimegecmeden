@@ -176,6 +176,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: theme.colors.textSecondary,
     padding: theme.spacing.sm,
+
   },
   content: {
     flex: 1,
@@ -244,3 +245,4 @@ const styles = StyleSheet.create({
 });
 
 export default FiltersModal;
+

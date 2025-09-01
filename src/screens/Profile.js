@@ -10,6 +10,7 @@ import {
   Animated,
   Image,
   Linking,
+  FlatList,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../theme/theme';
@@ -200,73 +201,49 @@ const Profile = () => {
     </Animated.View>
   );
 
-  const renderContactInfo = () => (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>İletişim Bilgileri</Text>
-      
-      <View style={styles.contactCard}>
-        <View style={styles.contactItem}>
-          <Text style={styles.contactIcon}>📍</Text>
-          <Text style={styles.contactText}>{currentUser.city}</Text>
+  const renderPortfolioCard = ({ item: portfolio }) => (
+    <View style={styles.portfolioCardContainer}>
+      <View style={styles.portfolioCardHeader}>
+        <View style={[
+          styles.statusBadge,
+          portfolio.isPublished ? styles.statusPublished : styles.statusHidden
+        ]}>
+          <Text style={styles.statusIcon}>
+            {portfolio.isPublished ? '👁️' : '🙈'}
+          </Text>
+          <Text style={styles.statusText}>
+            {portfolio.isPublished ? 'Yayında' : 'Gizli'}
+          </Text>
         </View>
         
-        <View style={styles.contactItem}>
-          <Text style={styles.contactIcon}>📞</Text>
-          <Text style={styles.contactText}>{currentUser.phone}</Text>
-        </View>
-        
-        <View style={styles.contactItem}>
-          <Text style={styles.contactIcon}>✉️</Text>
-          <Text style={styles.contactText}>{currentUser.email}</Text>
-        </View>
-        
-        <View style={styles.contactItem}>
-          <Text style={styles.contactIcon}>🏢</Text>
-          <Text style={styles.contactText}>{currentUser.officeName}</Text>
+        <View style={styles.portfolioCardActions}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => handleToggleVisibility(portfolio.id)}
+          >
+            <Text style={styles.actionButtonText}>
+              {portfolio.isPublished ? 'Gizle' : 'Yayınla'}
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[styles.actionButton, styles.deleteButton]}
+            onPress={() => handleDeletePortfolio(portfolio.id)}
+          >
+            <Text style={[styles.actionButtonText, styles.deleteButtonText]}>
+              Sil
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
-    </View>
-  );
-
-  const renderSocialMedia = () => (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Sosyal Medya</Text>
       
-      <View style={styles.socialCard}>
-        {currentUser.socialInstagram && (
-          <TouchableOpacity
-            style={styles.socialButton}
-            onPress={() => handleSocialPress('instagram', currentUser.socialInstagram)}
-          >
-            <Text style={styles.socialIcon}>📷</Text>
-            <Text style={styles.socialText}>Instagram</Text>
-          </TouchableOpacity>
-        )}
-        
-        {currentUser.socialFacebook && (
-          <TouchableOpacity
-            style={styles.socialButton}
-            onPress={() => handleSocialPress('facebook', currentUser.socialFacebook)}
-          >
-            <Text style={styles.socialIcon}>📘</Text>
-            <Text style={styles.socialText}>Facebook</Text>
-          </TouchableOpacity>
-        )}
-        
-        {currentUser.socialYoutube && (
-          <TouchableOpacity
-            style={styles.socialButton}
-            onPress={() => handleSocialPress('youtube', currentUser.socialYoutube)}
-          >
-            <Text style={styles.socialIcon}>📺</Text>
-            <Text style={styles.socialText}>YouTube</Text>
-          </TouchableOpacity>
-        )}
-        
-        {!currentUser.socialInstagram && !currentUser.socialFacebook && !currentUser.socialYoutube && (
-          <Text style={styles.noSocialText}>Henüz sosyal medya hesabı eklenmemiş</Text>
-        )}
-      </View>
+      <ListingCard
+        listing={portfolio}
+        onPress={() => handlePortfolioPress(portfolio)}
+        onEdit={() => navigation.navigate('AddPortfolio', { portfolio, isEditing: true })}
+        onDelete={() => handleDeletePortfolio(portfolio.id)}
+        isEditable={true}
+      />
     </View>
   );
 
@@ -283,52 +260,15 @@ const Profile = () => {
       </View>
 
       {userPortfolios.length > 0 ? (
-        <View style={styles.portfoliosContainer}>
-          {userPortfolios.map((portfolio) => (
-            <View key={portfolio.id} style={styles.portfolioItem}>
-              <View style={styles.portfolioHeader}>
-                <View style={[
-                  styles.statusBadge,
-                  portfolio.isPublished ? styles.statusPublished : styles.statusHidden
-                ]}>
-                  <Text style={styles.statusIcon}>
-                    {portfolio.isPublished ? '👁️' : '🙈'}
-                  </Text>
-                  <Text style={styles.statusText}>
-                    {portfolio.isPublished ? 'Yayında' : 'Gizli'}
-                  </Text>
-                </View>
-                
-                <View style={styles.portfolioActions}>
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() => handleToggleVisibility(portfolio.id)}
-                  >
-                    <Text style={styles.actionButtonText}>
-                      {portfolio.isPublished ? 'Gizle' : 'Yayınla'}
-                    </Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity
-                    style={[styles.actionButton, styles.deleteButton]}
-                    onPress={() => handleDeletePortfolio(portfolio.id)}
-                  >
-                    <Text style={[styles.actionButtonText, styles.deleteButtonText]}>
-                      Sil
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-              
-              <ListingCard
-                item={portfolio}
-                onPress={() => handlePortfolioPress(portfolio)}
-                onFavorite={() => {}}
-                isFavorite={false}
-              />
-            </View>
-          ))}
-        </View>
+        <FlatList
+          data={userPortfolios}
+          renderItem={renderPortfolioCard}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          columnWrapperStyle={styles.portfolioRow}
+          showsVerticalScrollIndicator={false}
+          scrollEnabled={false}
+        />
       ) : (
         <View style={styles.emptyPortfolios}>
           <Text style={styles.emptyIcon}>🏠</Text>
@@ -347,100 +287,31 @@ const Profile = () => {
     </View>
   );
 
-  const renderMenuItems = () => (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Hesap Yönetimi</Text>
-      
-      <View style={styles.menuCard}>
-        <TouchableOpacity style={styles.menuItem} onPress={handleEditProfile}>
-          <View style={styles.menuItemContent}>
-            <Text style={styles.menuItemIcon}>✏️</Text>
-            <View style={styles.menuItemText}>
-              <Text style={styles.menuItemTitle}>Profil Bilgileri</Text>
-              <Text style={styles.menuItemSubtitle}>Kişisel bilgileri düzenle</Text>
-            </View>
-            <Text style={styles.menuItemArrow}>→</Text>
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.menuItem} onPress={handleSubscriptionPress}>
-          <View style={styles.menuItemContent}>
-            <Text style={styles.menuItemIcon}>💳</Text>
-            <View style={styles.menuItemText}>
-              <Text style={styles.menuItemTitle}>Abonelik</Text>
-              <Text style={styles.menuItemSubtitle}>Paket durumu ve yönetimi</Text>
-            </View>
-            <Text style={styles.menuItemArrow}>→</Text>
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.menuItem}>
-          <View style={styles.menuItemContent}>
-            <Text style={styles.menuItemIcon}>🔔</Text>
-            <View style={styles.menuItemText}>
-              <Text style={styles.menuItemTitle}>Bildirimler</Text>
-              <Text style={styles.menuItemSubtitle}>Bildirim ayarları</Text>
-            </View>
-            <Text style={styles.menuItemArrow}>→</Text>
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.menuItem}>
-          <View style={styles.menuItemContent}>
-            <Text style={styles.menuItemIcon}>🔒</Text>
-            <View style={styles.menuItemText}>
-              <Text style={styles.menuItemTitle}>Şifre Değiştir</Text>
-              <Text style={styles.menuItemSubtitle}>Güvenlik ayarları</Text>
-            </View>
-            <Text style={styles.menuItemArrow}>→</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
-  const renderAccountInfo = () => (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Hesap Bilgileri</Text>
-      
-      <View style={styles.accountCard}>
-        <View style={styles.accountItem}>
-          <Text style={styles.accountLabel}>Üyelik Tarihi</Text>
-          <Text style={styles.accountValue}>{formatDate(currentUser.createdAt)}</Text>
-        </View>
-        
-        <View style={styles.accountItem}>
-          <Text style={styles.accountLabel}>Abonelik</Text>
-          <Text style={styles.accountValue}>{currentUser.subscription.plan}</Text>
-        </View>
-        
-        <View style={styles.accountItem}>
-          <Text style={styles.accountLabel}>Durum</Text>
-          <Text style={[
-            styles.accountValue,
-            styles.accountStatus,
-            currentUser.subscription.status === 'active' ? styles.statusActive : styles.statusInactive
-          ]}>
-            {currentUser.subscription.status === 'active' ? 'Aktif' : 'Pasif'}
-          </Text>
-        </View>
-      </View>
-    </View>
-  );
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          {/* Sol taraf boş bırakıldı */}
+        </View>
+        
         <Text style={styles.headerTitle}>Profil</Text>
+        
+        <View style={styles.headerRight}>
+          <TouchableOpacity 
+            style={styles.headerButton}
+            onPress={() => navigation.navigate('Settings')}
+          >
+            <Text style={styles.headerButtonIcon}>⚙️</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerButton}>
+            <Text style={styles.headerButtonIcon}>☰</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {renderProfileHeader()}
-        {renderContactInfo()}
-        {renderSocialMedia()}
         {renderPortfolios()}
-        {renderMenuItems()}
-        {renderAccountInfo()}
       </ScrollView>
     </View>
   );
@@ -457,11 +328,35 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: theme.spacing.sm,
+  },
+  headerButtonIcon: {
+    fontSize: 20,
+    color: theme.colors.text,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: '700',
     color: theme.colors.text,
+    textAlign: 'center',
+    flex: 1,
   },
   content: {
     flex: 1,
@@ -553,45 +448,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: theme.spacing.md,
   },
-  contactIcon: {
-    fontSize: 20,
-    marginRight: theme.spacing.md,
-    width: 24,
-  },
-  contactText: {
-    fontSize: 16,
-    color: theme.colors.text,
-    flex: 1,
-  },
-  socialCard: {
-    backgroundColor: theme.colors.cardBg,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  socialButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  socialIcon: {
-    fontSize: 20,
-    marginRight: theme.spacing.md,
-    width: 24,
-  },
-  socialText: {
-    fontSize: 16,
-    color: theme.colors.text,
-  },
-  noSocialText: {
-    fontSize: 16,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
+
   portfoliosHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -611,21 +468,19 @@ const styles = StyleSheet.create({
     color: theme.colors.white,
     fontWeight: '700',
   },
-  portfoliosContainer: {
-    gap: theme.spacing.lg,
+  portfolioCardContainer: {
+    width: (width - theme.spacing.lg * 3) / 2,
+    marginBottom: theme.spacing.md,
   },
-  portfolioItem: {
-    backgroundColor: theme.colors.cardBg,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  portfolioHeader: {
+  portfolioCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
+  },
+  portfolioCardActions: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
   },
   statusBadge: {
     flexDirection: 'row',
@@ -648,26 +503,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  portfolioActions: {
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
-  },
   actionButton: {
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: theme.spacing.sm,
+    paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: theme.borderRadius.sm,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 0, 0, 0.1)',
   },
   actionButtonText: {
-    fontSize: 12,
-    color: theme.colors.white,
+    fontSize: 10,
     fontWeight: '600',
+    color: theme.colors.primary,
   },
   deleteButton: {
-    backgroundColor: 'rgba(239, 68, 68, 0.8)',
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
   },
   deleteButtonText: {
-    color: theme.colors.white,
+    color: '#ef4444',
   },
   emptyPortfolios: {
     alignItems: 'center',
@@ -699,6 +550,9 @@ const styles = StyleSheet.create({
     color: theme.colors.white,
     fontSize: 16,
     fontWeight: '600',
+  },
+  portfolioRow: {
+    justifyContent: 'space-between',
   },
   menuCard: {
     backgroundColor: theme.colors.cardBg,

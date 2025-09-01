@@ -359,6 +359,7 @@ const styles = StyleSheet.create({
     color: theme.colors.white,
     fontSize: 12,
     fontWeight: '600',
+
   },
   
   requestDescription: {
@@ -476,3 +477,4 @@ const styles = StyleSheet.create({
 });
 
 export default DemandPool;
+

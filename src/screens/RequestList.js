@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Alert,
   Animated,
   Modal,
+  FlatList,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../theme/theme';
@@ -21,6 +22,11 @@ const RequestList = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [expandedRequest, setExpandedRequest] = useState(null);
+  const [favorites, setFavorites] = useState([]);
+  const [showFavorites, setShowFavorites] = useState(false);
+  const [showMatchingPortfolios, setShowMatchingPortfolios] = useState(false);
+  const [hiddenRequests, setHiddenRequests] = useState([]);
+  const [showHidden, setShowHidden] = useState(false);
 
   // Mock data
   const [requests, setRequests] = useState([
@@ -28,6 +34,7 @@ const RequestList = () => {
       id: '1',
       clientName: 'Ahmet Yılmaz',
       clientPhone: '0555 123 45 67',
+      officeName: 'Samsun Emlak Ofisi',
       propertyType: 'Satılık',
       maxBudget: 2500000,
       minSqMeters: 80,
@@ -37,11 +44,13 @@ const RequestList = () => {
       status: 'Yeni',
       createdAt: Date.now() - 2 * 24 * 60 * 60 * 1000, // 2 gün önce
       notes: 'Merkezi konumda, asansörlü bina tercih edilir.',
+      matchingPortfolios: 3,
     },
     {
       id: '2',
       clientName: 'Fatma Demir',
       clientPhone: '0555 987 65 43',
+      officeName: 'Deniz Emlak',
       propertyType: 'Kiralık',
       maxBudget: 15000,
       minSqMeters: 60,
@@ -51,11 +60,13 @@ const RequestList = () => {
       status: 'İşlemde',
       createdAt: Date.now() - 5 * 24 * 60 * 60 * 1000, // 5 gün önce
       notes: 'Deniz manzaralı, güvenli site tercih edilir.',
+      matchingPortfolios: 1,
     },
     {
       id: '3',
       clientName: 'Mehmet Kaya',
       clientPhone: '0555 456 78 90',
+      officeName: 'Kolpınar Emlak',
       propertyType: 'Satılık',
       maxBudget: 5000000,
       minSqMeters: 120,
@@ -65,6 +76,7 @@ const RequestList = () => {
       status: 'Sonuçlandı',
       createdAt: Date.now() - 10 * 24 * 60 * 60 * 1000, // 10 gün önce
       notes: 'Bahçeli müstakil ev tercih edilir.',
+      matchingPortfolios: 0,
     },
   ]);
 
@@ -83,6 +95,23 @@ const RequestList = () => {
       month: 'short',
       year: 'numeric',
     });
+  };
+
+  const getTimeAgo = (timestamp) => {
+    const now = new Date();
+    const requestDate = new Date(timestamp);
+    const diffTime = Math.abs(now - requestDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 1) {
+      return 'Bugün';
+    } else if (diffDays === 2) {
+      return 'Dün';
+    } else if (diffDays <= 7) {
+      return `${diffDays}. gün`;
+    } else {
+      return formatDate(timestamp);
+    }
   };
 
   const formatPrice = (price) => {
@@ -116,13 +145,56 @@ const RequestList = () => {
     setExpandedRequest(expandedRequest === requestId ? null : requestId);
   };
 
-  const renderRequestCard = (request) => {
+  const toggleFavorite = (requestId) => {
+    setFavorites(prev => {
+      if (prev.includes(requestId)) {
+        return prev.filter(id => id !== requestId);
+      } else {
+        return [...prev, requestId];
+      }
+    });
+  };
+
+  const isFavorite = (requestId) => {
+    return favorites.includes(requestId);
+  };
+
+  const isHidden = (requestId) => {
+    return hiddenRequests.includes(requestId);
+  };
+
+  const toggleHidden = (requestId) => {
+    setHiddenRequests(prev => {
+      if (prev.includes(requestId)) {
+        return prev.filter(id => id !== requestId);
+      } else {
+        return [...prev, requestId];
+      }
+    });
+  };
+
+  const filteredRequests = useMemo(() => {
+    let filtered = requests;
+    
+    // Gizli talepleri filtrele
+    if (!showHidden) {
+      filtered = filtered.filter(request => !hiddenRequests.includes(request.id));
+    }
+    
+    // Favori talepleri göster
+    if (showFavorites) {
+      filtered = filtered.filter(request => favorites.includes(request.id));
+    }
+    
+    return filtered;
+  }, [requests, showFavorites, favorites, showHidden, hiddenRequests]);
+
+  const renderRequestCard = ({ item: request }) => {
     const isExpanded = expandedRequest === request.id;
     const statusColor = getStatusColor(request.status);
 
     return (
       <Animated.View
-        key={request.id}
         style={[
           styles.requestCard,
           { opacity: fadeAnim }
@@ -137,38 +209,54 @@ const RequestList = () => {
             <View style={styles.agentPicture}>
               <Text style={styles.agentIcon}>👤</Text>
             </View>
-            <View style={styles.agentDetails}>
-              <Text style={styles.agentName}>{request.clientName}</Text>
-              <View style={styles.agentContact}>
-                <Text style={styles.contactText}>📞 {request.clientPhone}</Text>
-                <Text style={styles.contactText}>📍 {request.locations.join(', ')}</Text>
-              </View>
-            </View>
+                         <View style={styles.agentDetails}>
+               <Text style={styles.agentName}>{request.clientName}</Text>
+               <Text style={styles.agentOffice}>{request.officeName}</Text>
+               <Text style={styles.agentTime}>{getTimeAgo(request.createdAt)}</Text>
+             </View>
           </View>
 
           <View style={styles.requestActions}>
-            <View style={styles.statusBadge}>
-              <Text style={styles.propertyType}>{request.propertyType}</Text>
-            </View>
-            
             <TouchableOpacity
-              style={[styles.statusButton, { backgroundColor: statusColor }]}
-              onPress={() => {
-                Alert.alert(
-                  'Durum Değiştir',
-                  'Yeni durumu seçin:',
-                  [
-                    { text: 'Yeni', onPress: () => handleStatusUpdate(request.id, 'Yeni') },
-                    { text: 'İşlemde', onPress: () => handleStatusUpdate(request.id, 'İşlemde') },
-                    { text: 'Sonuçlandı', onPress: () => handleStatusUpdate(request.id, 'Sonuçlandı') },
-                    { text: 'İptal', onPress: () => handleStatusUpdate(request.id, 'İptal') },
-                    { text: 'Vazgeç', style: 'cancel' }
-                  ]
-                );
-              }}
+              style={styles.favoriteButton}
+              onPress={() => toggleFavorite(request.id)}
             >
-              <Text style={styles.statusText}>{request.status}</Text>
+              <Text style={styles.favoriteIcon}>
+                {isFavorite(request.id) ? '❤️' : '🤍'}
+              </Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.hideButton}
+              onPress={() => toggleHidden(request.id)}
+            >
+              <Text style={styles.hideIcon}>
+                {isHidden(request.id) ? '👁️' : '🙈'}
+              </Text>
+            </TouchableOpacity>
+
+                         <View style={styles.statusBadge}>
+               <Text style={styles.propertyType}>{request.propertyType}</Text>
+             </View>
+             
+             <TouchableOpacity
+               style={[styles.statusButton, { backgroundColor: statusColor }]}
+               onPress={() => {
+                 Alert.alert(
+                   'Durum Değiştir',
+                   'Yeni durumu seçin:',
+                   [
+                     { text: 'Yeni', onPress: () => handleStatusUpdate(request.id, 'Yeni') },
+                     { text: 'İşlemde', onPress: () => handleStatusUpdate(request.id, 'İşlemde') },
+                     { text: 'Sonuçlandı', onPress: () => handleStatusUpdate(request.id, 'Sonuçlandı') },
+                     { text: 'İptal', onPress: () => handleStatusUpdate(request.id, 'İptal') },
+                     { text: 'Vazgeç', style: 'cancel' }
+                   ]
+                 );
+               }}
+             >
+               <Text style={styles.statusText}>{request.status}</Text>
+             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.detailsButton}
@@ -190,10 +278,6 @@ const RequestList = () => {
             <Text style={styles.detailLabel}>💰 Bütçe:</Text>
             <Text style={styles.detailValue}>En Fazla {formatPrice(request.maxBudget)} ₺</Text>
           </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>📏 Metrekare:</Text>
-            <Text style={styles.detailValue}>{request.minSqMeters} - {request.maxSqMeters} m²</Text>
-          </View>
           {request.roomCount && (
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>🛏️ Oda:</Text>
@@ -201,160 +285,204 @@ const RequestList = () => {
             </View>
           )}
           <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>📍 Tercih:</Text>
+            <Text style={styles.detailLabel}>📍 Lokasyon:</Text>
             <Text style={styles.detailValue}>{request.locations.join(', ')}</Text>
           </View>
-          {request.notes && (
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>📝 Not:</Text>
-              <Text style={styles.detailValue}>{request.notes}</Text>
-            </View>
+          
+          {request.matchingPortfolios > 0 && (
+            <TouchableOpacity
+              style={styles.matchingButton}
+              onPress={() => {
+                setShowMatchingPortfolios(true);
+                setSelectedRequest(request);
+              }}
+            >
+              <Text style={styles.matchingButtonText}>
+                🏠 {request.matchingPortfolios} Eşleşen Portföyünüz Bulundu
+              </Text>
+            </TouchableOpacity>
           )}
         </View>
-
-        <View style={styles.matchingSection}>
-          <Text style={styles.matchCount}>
-            🏠 3 Eşleşen Portföyünüz Bulundu
-          </Text>
-          <TouchableOpacity style={styles.viewMatchesButton}>
-            <Text style={styles.viewMatchesText}>
-              {isExpanded ? 'Gizle' : 'Portföyleri Gör'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {isExpanded && (
-          <Animated.View style={styles.matchesContainer}>
-            <Text style={styles.matchesTitle}>Eşleşen Portföyler</Text>
-            <View style={styles.matchesGrid}>
-              <View style={styles.matchCard}>
-                <Text style={styles.matchCardTitle}>Atakent 2+1</Text>
-                <Text style={styles.matchCardPrice}>2.300.000 ₺</Text>
-                <Text style={styles.matchCardLocation}>Atakent Mah.</Text>
-              </View>
-              <View style={styles.matchCard}>
-                <Text style={styles.matchCardTitle}>Güzelyalı 2+1</Text>
-                <Text style={styles.matchCardPrice}>2.450.000 ₺</Text>
-                <Text style={styles.matchCardLocation}>Güzelyalı Mah.</Text>
-              </View>
-              <View style={styles.matchCard}>
-                <Text style={styles.matchCardTitle}>Cumhuriyet 2+1</Text>
-                <Text style={styles.matchCardPrice}>2.100.000 ₺</Text>
-                <Text style={styles.matchCardLocation}>Cumhuriyet Mah.</Text>
-              </View>
-            </View>
-          </Animated.View>
-        )}
       </Animated.View>
     );
   };
 
-  const renderDetailsModal = () => (
-    <Modal
-      visible={showDetailsModal}
-      transparent={true}
-      animationType="fade"
-    >
-      <View style={styles.modalBackdrop}>
-        <View style={styles.modalCard}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Talep Detayları</Text>
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <View style={styles.headerContent}>
+        <View style={styles.headerTop}>
+          <Text style={styles.mainTitle}>
+            {showFavorites ? 'Favori Talepler' : showHidden ? 'Gizlenmiş Talepler' : 'Talep Havuzu'}
+          </Text>
+          
+          <View style={styles.headerButtons}>
             <TouchableOpacity
-              style={styles.modalCloseButton}
-              onPress={() => setShowDetailsModal(false)}
+              style={[styles.headerButton, showFavorites && styles.headerButtonActive]}
+              onPress={() => {
+                setShowFavorites(!showFavorites);
+                setShowHidden(false);
+              }}
             >
-              <Text style={styles.modalCloseText}>×</Text>
+              <Text style={styles.headerButtonIcon}>
+                {showFavorites ? '📋' : '❤️'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.headerButton, showHidden && styles.headerButtonActive]}
+              onPress={() => {
+                setShowHidden(!showHidden);
+                setShowFavorites(false);
+              }}
+            >
+              <Text style={styles.headerButtonIcon}>
+                {showHidden ? '📋' : '🙈'}
+              </Text>
             </TouchableOpacity>
           </View>
-
-          {selectedRequest && (
-            <ScrollView style={styles.modalContent}>
-              <View style={styles.detailGrid}>
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailItemLabel}>Müşteri Adı</Text>
-                  <Text style={styles.detailItemValue}>{selectedRequest.clientName}</Text>
-                </View>
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailItemLabel}>Telefon</Text>
-                  <Text style={styles.detailItemValue}>{selectedRequest.clientPhone}</Text>
-                </View>
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailItemLabel}>İşlem Türü</Text>
-                  <Text style={styles.detailItemValue}>{selectedRequest.propertyType}</Text>
-                </View>
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailItemLabel}>Bütçe (max)</Text>
-                  <Text style={styles.detailItemValue}>{formatPrice(selectedRequest.maxBudget)} ₺</Text>
-                </View>
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailItemLabel}>Metrekare</Text>
-                  <Text style={styles.detailItemValue}>{selectedRequest.minSqMeters} - {selectedRequest.maxSqMeters} m²</Text>
-                </View>
-                {selectedRequest.roomCount && (
-                  <View style={styles.detailItem}>
-                    <Text style={styles.detailItemLabel}>Oda Sayısı</Text>
-                    <Text style={styles.detailItemValue}>{selectedRequest.roomCount}</Text>
-                  </View>
-                )}
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailItemLabel}>Tercih Edilen Mahalleler</Text>
-                  <Text style={styles.detailItemValue}>{selectedRequest.locations.join(', ')}</Text>
-                </View>
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailItemLabel}>Oluşturulma Tarihi</Text>
-                  <Text style={styles.detailItemValue}>{formatDate(selectedRequest.createdAt)}</Text>
-                </View>
-                {selectedRequest.notes && (
-                  <View style={styles.detailItem}>
-                    <Text style={styles.detailItemLabel}>Notlar</Text>
-                    <Text style={styles.detailItemValue}>{selectedRequest.notes}</Text>
-                  </View>
-                )}
-              </View>
-            </ScrollView>
-          )}
         </View>
+        
+        <Text style={styles.mainSubtitle}>
+          {showFavorites 
+            ? `${favorites.length} favori talep` 
+            : showHidden
+            ? `${hiddenRequests.length} gizlenmiş talep`
+            : `${requests.filter(r => !hiddenRequests.includes(r.id)).length} aktif talep`
+          }
+        </Text>
       </View>
-    </Modal>
+    </View>
+  );
+
+  const renderEmptyComponent = () => (
+    <View style={styles.emptyContainer}>
+      <Text style={styles.emptyIcon}>
+        {showFavorites ? '❤️' : showHidden ? '🙈' : '📋'}
+      </Text>
+      <Text style={styles.emptyText}>
+        {showFavorites 
+          ? 'Henüz favori talebiniz yok' 
+          : showHidden 
+          ? 'Henüz gizlenmiş talebiniz yok'
+          : 'Henüz talep bulunamadı'
+        }
+      </Text>
+      <Text style={styles.emptySubtext}>
+        {showFavorites 
+          ? 'Beğendiğiniz talepleri favorilere ekleyin' 
+          : showHidden
+          ? 'Gizlemek istediğiniz talepleri gizleyin'
+          : 'Yeni talepler eklendiğinde burada görünecek'
+        }
+      </Text>
+    </View>
   );
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.backIcon}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Taleplerim</Text>
-        <View style={styles.placeholder} />
-      </View>
+             <FlatList
+         data={filteredRequests}
+         renderItem={renderRequestCard}
+         keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContainer}
+        showsVerticalScrollIndicator={false}
+        ListHeaderComponent={renderHeader}
+        ListEmptyComponent={renderEmptyComponent}
+      />
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Müşteri Taleplerim</Text>
-          <Text style={styles.sectionDescription}>
-            Müşterilerinizin talepleri ve eşleşen portföyleriniz
-          </Text>
-        </View>
-
-        <View style={styles.requestsContainer}>
-          {requests.map(request => renderRequestCard(request))}
-        </View>
-
-        {requests.length === 0 && (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>📋</Text>
-            <Text style={styles.emptyTitle}>Henüz Talep Yok</Text>
-            <Text style={styles.emptyDescription}>
-              Müşteri talepleri burada görünecek
-            </Text>
+      {/* Eşleşen Portföyler Modal */}
+      <Modal
+        visible={showMatchingPortfolios}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Eşleşen Portföyler</Text>
+            <TouchableOpacity onPress={() => setShowMatchingPortfolios(false)}>
+              <Text style={styles.closeButton}>✕</Text>
+            </TouchableOpacity>
           </View>
-        )}
-      </ScrollView>
+          
+          <ScrollView style={styles.modalContent}>
+            <Text style={styles.modalSubtitle}>
+              {selectedRequest?.clientName} için uygun portföyleriniz:
+            </Text>
+            
+            {/* Mock eşleşen portföyler */}
+            <View style={styles.matchingPortfolioCard}>
+              <Text style={styles.portfolioTitle}>Atakent Satılık Daire</Text>
+              <Text style={styles.portfolioDetails}>2+1 • 95m² • 2.300.000 ₺</Text>
+              <TouchableOpacity style={styles.viewPortfolioButton}>
+                <Text style={styles.viewPortfolioText}>Portföyü Görüntüle</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.matchingPortfolioCard}>
+              <Text style={styles.portfolioTitle}>Güzelyalı Satılık Daire</Text>
+              <Text style={styles.portfolioDetails}>2+1 • 110m² • 2.450.000 ₺</Text>
+              <TouchableOpacity style={styles.viewPortfolioButton}>
+                <Text style={styles.viewPortfolioText}>Portföyü Görüntüle</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.matchingPortfolioCard}>
+              <Text style={styles.portfolioTitle}>Cumhuriyet Satılık Daire</Text>
+              <Text style={styles.portfolioDetails}>2+1 • 85m² • 2.100.000 ₺</Text>
+              <TouchableOpacity style={styles.viewPortfolioButton}>
+                <Text style={styles.viewPortfolioText}>Portföyü Görüntüle</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </View>
+      </Modal>
 
-      {renderDetailsModal()}
+      {/* Detay Modal */}
+      <Modal
+        visible={showDetailsModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Talep Detayları</Text>
+            <TouchableOpacity onPress={() => setShowDetailsModal(false)}>
+              <Text style={styles.closeButton}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <ScrollView style={styles.modalContent}>
+            {selectedRequest && (
+              <>
+                <View style={styles.detailSection}>
+                  <Text style={styles.sectionTitle}>Müşteri Bilgileri</Text>
+                  <Text style={styles.detailText}>İsim: {selectedRequest.clientName}</Text>
+                  <Text style={styles.detailText}>Telefon: {selectedRequest.clientPhone}</Text>
+                  <Text style={styles.detailText}>Oluşturulma: {formatDate(selectedRequest.createdAt)}</Text>
+                </View>
+                
+                <View style={styles.detailSection}>
+                  <Text style={styles.sectionTitle}>Talep Detayları</Text>
+                  <Text style={styles.detailText}>İşlem Türü: {selectedRequest.propertyType}</Text>
+                  <Text style={styles.detailText}>Bütçe: En Fazla {formatPrice(selectedRequest.maxBudget)} ₺</Text>
+                  <Text style={styles.detailText}>Metrekare: {selectedRequest.minSqMeters} - {selectedRequest.maxSqMeters} m²</Text>
+                  {selectedRequest.roomCount && (
+                    <Text style={styles.detailText}>Oda: {selectedRequest.roomCount}</Text>
+                  )}
+                  <Text style={styles.detailText}>Lokasyon: {selectedRequest.locations.join(', ')}</Text>
+                </View>
+                
+                {selectedRequest.notes && (
+                  <View style={styles.detailSection}>
+                    <Text style={styles.sectionTitle}>Notlar</Text>
+                    <Text style={styles.detailText}>{selectedRequest.notes}</Text>
+                  </View>
+                )}
+              </>
+            )}
+          </ScrollView>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -364,292 +492,299 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
+  listContainer: {
+    padding: 16,
+  },
   header: {
-    flexDirection: 'row',
+    marginBottom: 24,
+  },
+  headerContent: {
     alignItems: 'center',
+    marginBottom: 24,
+  },
+  headerTop: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    paddingTop: 50,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 8,
   },
-  backButton: {
-    padding: theme.spacing.sm,
-  },
-  backIcon: {
-    fontSize: 24,
-    color: theme.colors.text,
-  },
-  headerTitle: {
-    fontSize: 20,
+  mainTitle: {
+    fontSize: 32,
     fontWeight: '700',
     color: theme.colors.text,
+    letterSpacing: 1,
   },
-  placeholder: {
-    width: 40,
-  },
-  content: {
-    flex: 1,
-    padding: theme.spacing.lg,
-  },
-  section: {
-    marginBottom: theme.spacing.xl,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: theme.colors.text,
-    marginBottom: theme.spacing.sm,
-  },
-  sectionDescription: {
+  mainSubtitle: {
     fontSize: 16,
-    color: theme.colors.textSecondary,
-    lineHeight: 24,
+    color: '#ff0000',
+    opacity: 0.8,
   },
-  requestsContainer: {
-    gap: theme.spacing.lg,
+  headerButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  headerButton: {
+    backgroundColor: 'rgba(255, 0, 0, 0.1)',
+    borderWidth: 1,
+    borderColor: '#ff0000',
+    borderRadius: 8,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerButtonActive: {
+    backgroundColor: '#ff0000',
+  },
+  headerButtonIcon: {
+    fontSize: 18,
   },
   requestCard: {
     backgroundColor: theme.colors.cardBg,
     borderRadius: theme.borderRadius.lg,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    overflow: 'hidden',
+    shadowColor: theme.colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   requestHeader: {
-    padding: theme.spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
   },
   agentInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.spacing.md,
+    flex: 1,
   },
   agentPicture: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 0, 0, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: theme.spacing.md,
+    marginRight: 12,
   },
   agentIcon: {
-    fontSize: 24,
+    fontSize: 20,
   },
   agentDetails: {
     flex: 1,
   },
   agentName: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: theme.colors.text,
-    marginBottom: 4,
+    marginBottom: 2,
   },
-  agentContact: {
-    gap: 2,
-  },
-  contactText: {
-    fontSize: 14,
+  agentOffice: {
+    fontSize: 11,
     color: theme.colors.textSecondary,
+    fontWeight: '400',
+    marginBottom: 2,
+  },
+  agentTime: {
+    fontSize: 11,
+    color: '#ff0000',
+    fontWeight: '500',
   },
   requestActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
+    gap: 8,
+  },
+  favoriteButton: {
+    padding: 4,
+  },
+  favoriteIcon: {
+    fontSize: 16,
+  },
+  hideButton: {
+    padding: 4,
+  },
+  hideIcon: {
+    fontSize: 16,
   },
   statusBadge: {
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: theme.spacing.sm,
+    backgroundColor: 'rgba(255, 0, 0, 0.1)',
+    paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: theme.borderRadius.sm,
+    borderRadius: 4,
   },
   propertyType: {
-    color: theme.colors.white,
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '600',
+    color: '#ff0000',
   },
+
   statusButton: {
-    paddingHorizontal: theme.spacing.sm,
+    paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: theme.borderRadius.sm,
+    borderRadius: 4,
   },
   statusText: {
-    color: theme.colors.white,
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '600',
+    color: '#ffffff',
   },
   detailsButton: {
-    padding: theme.spacing.sm,
+    padding: 4,
   },
   detailsButtonText: {
-    fontSize: 18,
+    fontSize: 16,
   },
   expandButton: {
-    padding: theme.spacing.sm,
+    padding: 4,
   },
   expandIcon: {
-    fontSize: 16,
+    fontSize: 12,
     color: theme.colors.textSecondary,
   },
   requestDetails: {
-    padding: theme.spacing.lg,
-    gap: theme.spacing.sm,
+    padding: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
   },
   detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 8,
   },
   detailLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: theme.colors.textSecondary,
-    fontWeight: '500',
-  },
-  detailValue: {
-    fontSize: 14,
-    color: theme.colors.text,
-    fontWeight: '600',
-    textAlign: 'right',
     flex: 1,
   },
-  matchingSection: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: theme.spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
-  },
-  matchCount: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
+  detailValue: {
+    fontSize: 12,
+    color: theme.colors.text,
     fontWeight: '500',
+    flex: 2,
+    textAlign: 'right',
   },
-  viewMatchesButton: {
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
-  },
-  viewMatchesText: {
-    color: theme.colors.white,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  matchesContainer: {
-    padding: theme.spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
-  },
-  matchesTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.text,
-    marginBottom: theme.spacing.md,
-  },
-  matchesGrid: {
-    gap: theme.spacing.md,
-  },
-  matchCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  matchCardTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.text,
-    marginBottom: 4,
-  },
-  matchCardPrice: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: theme.colors.primary,
-    marginBottom: 4,
-  },
-  matchCardLocation: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
-  },
-  emptyState: {
+  matchingButton: {
+    backgroundColor: '#ff0000',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 12,
     alignItems: 'center',
-    paddingVertical: theme.spacing.xl * 2,
+  },
+  matchingButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 40,
+    gap: 8,
   },
   emptyIcon: {
     fontSize: 64,
-    marginBottom: theme.spacing.lg,
+    marginBottom: 16,
   },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: '600',
+  emptyText: {
     color: theme.colors.text,
-    marginBottom: theme.spacing.sm,
-  },
-  emptyDescription: {
-    fontSize: 16,
-    color: theme.colors.textSecondary,
+    fontSize: 18,
+    fontWeight: '600',
     textAlign: 'center',
   },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+  emptySubtext: {
+    color: theme.colors.textSecondary,
+    fontSize: 14,
+    textAlign: 'center',
+    paddingHorizontal: 32,
   },
-  modalCard: {
-    backgroundColor: theme.colors.cardBg,
-    borderRadius: theme.borderRadius.lg,
-    marginHorizontal: theme.spacing.lg,
-    maxHeight: height * 0.8,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+  modalContainer: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: theme.spacing.lg,
+    padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
+    paddingTop: 50,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: '700',
     color: theme.colors.text,
   },
-  modalCloseButton: {
-    padding: theme.spacing.sm,
-  },
-  modalCloseText: {
+  closeButton: {
     fontSize: 24,
     color: theme.colors.textSecondary,
+    padding: 4,
   },
   modalContent: {
-    padding: theme.spacing.lg,
+    flex: 1,
+    padding: 20,
   },
-  detailGrid: {
-    gap: theme.spacing.lg,
-  },
-  detailItem: {
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
-    paddingBottom: theme.spacing.md,
-  },
-  detailItemLabel: {
-    fontSize: 14,
+  modalSubtitle: {
+    fontSize: 16,
     color: theme.colors.textSecondary,
+    marginBottom: 20,
+  },
+  matchingPortfolioCard: {
+    backgroundColor: theme.colors.cardBg,
+    borderRadius: theme.borderRadius.md,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  portfolioTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.text,
     marginBottom: 4,
   },
-  detailItemValue: {
+  portfolioDetails: {
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+    marginBottom: 12,
+  },
+  viewPortfolioButton: {
+    backgroundColor: '#ff0000',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+  },
+  viewPortfolioText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  detailSection: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: theme.colors.text,
+    marginBottom: 12,
+  },
+  detailText: {
     fontSize: 16,
     color: theme.colors.text,
-    fontWeight: '600',
+    marginBottom: 8,
+    lineHeight: 24,
   },
 });
 
 export default RequestList;
+

@@ -1,480 +1,408 @@
 // src/screens/Home.js
-// Firestore'dan 'talepifyproje' koleksiyonunu okuyup portföyleri listeler.
-// Öncelik: docType === 'portfolio' olan belgeler.
-// Eğer yoksa, başlık/şehir/fiyat alanları olanları esnek şekilde toplar.
-// Koyu tema (#07141e) + cam efektli kart + kırmızı vurgu ile basit liste.
-// Filtre butonu ile FilterSheet açılır ve client-side filtreleme yapılır.
+// Yeni ana sayfa tasarımı - kırmızı header, görev kartı, ikonlar ve toggle butonları
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
-  FlatList,
   TouchableOpacity,
   Image,
   StyleSheet,
   Dimensions,
-  ActivityIndicator,
-  TextInput,
+  ScrollView,
   Animated,
-  RefreshControl,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import Header from '../components/Header';
-import FiltersModal from './FiltersModal';
-import SuccessModal from '../components/SuccessModal';
-import ListingCard from '../components/ListingCard';
-import { fetchPortfolios } from '../services/firestore';
-import { showSuccess } from '../services/index';
 import { theme } from '../theme/theme';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const Home = () => {
   const navigation = useNavigation();
-  const [portfolios, setPortfolios] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState({});
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showSearch, setShowSearch] = useState(false);
-  const [favorites, setFavorites] = useState([]);
-  const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [selectedPortfolioTab, setSelectedPortfolioTab] = useState('portfolios');
+  const [selectedFavoriteTab, setSelectedFavoriteTab] = useState('favoritePortfolios');
 
+  // Business kalitesinde animasyonlar
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideUpAnim = useRef(new Animated.Value(30)).current;
+  const scaleAnim = useRef(new Animated.Value(0.95)).current;
+  const headerSlideAnim = useRef(new Animated.Value(-20)).current;
 
   useEffect(() => {
-    loadPortfolios();
+    // Business kalitesinde animasyon sequence
+    Animated.parallel([
     Animated.timing(fadeAnim, {
       toValue: 1,
-      duration: 1000,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideUpAnim, {
+        toValue: 0,
+        tension: 100,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        tension: 80,
+        friction: 6,
+        useNativeDriver: true,
+      }),
+      Animated.spring(headerSlideAnim, {
+        toValue: 0,
+        tension: 90,
+        friction: 7,
       useNativeDriver: true,
-    }).start();
-  }, [fadeAnim, loadPortfolios]);
+      }),
+    ]).start();
+  }, [fadeAnim, slideUpAnim, scaleAnim, headerSlideAnim]);
 
-  const loadPortfolios = useCallback(async () => {
-    try {
-      const data = await fetchPortfolios();
-      setPortfolios(data);
-    } catch (error) {
-      console.error('Portföyler yüklenirken hata:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchPortfolios]);
-
-  const fetchPortfolios = useCallback(async () => {
-    // Mock data - gerçek uygulamada Firebase'den gelecek
-    return [
-      {
-        id: '1',
-        title: 'Atakum Denizevleri Satılık Daire',
-        city: 'Samsun',
-        district: 'Atakum',
-        neighborhood: 'Denizevleri',
-        price: 2500000,
-        listingStatus: 'Satılık',
-        propertyType: 'Daire',
-        squareMeters: 120,
-        roomCount: '3+1',
-        buildingAge: 5,
-        floor: 3,
-        parking: true,
-        images: ['https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1600&auto=format&fit=crop']
-      },
-      {
-        id: '2',
-        title: 'İlkadım Merkez Kiralık Daire',
-        city: 'Samsun',
-        district: 'İlkadım',
-        neighborhood: 'Merkez',
-        price: 8500,
-        listingStatus: 'Kiralık',
-        propertyType: 'Daire',
-        squareMeters: 85,
-        roomCount: '2+1',
-        buildingAge: 8,
-        floor: 2,
-        parking: false,
-        images: ['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1600&auto=format&fit=crop']
-      },
-      {
-        id: '3',
-        title: 'Canik Villa Satılık',
-        city: 'Samsun',
-        district: 'Canik',
-        neighborhood: 'Villa Mahallesi',
-        price: 4500000,
-        listingStatus: 'Satılık',
-        propertyType: 'Villa',
-        squareMeters: 200,
-        roomCount: '4+2',
-        buildingAge: 3,
-        floor: 2,
-        parking: true,
-        images: ['https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=1600&auto=format&fit=crop']
-      },
-      {
-        id: '4',
-        title: 'Tekkeköy İş Yeri Kiralık',
-        city: 'Samsun',
-        district: 'Tekkeköy',
-        neighborhood: 'Ticaret Merkezi',
-        price: 12000,
-        listingStatus: 'Kiralık',
-        propertyType: 'İş Yeri',
-        squareMeters: 150,
-        roomCount: null,
-        buildingAge: 10,
-        floor: 1,
-        parking: true,
-        images: ['https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=1600&auto=format&fit=crop']
-      },
-      {
-        id: '5',
-        title: 'Bafra Sahil Daire Satılık',
-        city: 'Samsun',
-        district: 'Bafra',
-        neighborhood: 'Sahil Mahallesi',
-        price: 1800000,
-        listingStatus: 'Satılık',
-        propertyType: 'Daire',
-        squareMeters: 95,
-        roomCount: '2+1',
-        buildingAge: 2,
-        floor: 5,
-        parking: true,
-        images: ['https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=1600&auto=format&fit=crop']
-      }
-    ];
-  }, []);
-
-  const toggleFavorite = (itemId) => {
-    setFavorites(prev => {
-      if (prev.includes(itemId)) {
-        showSuccess('Favorilerden çıkarıldı');
-        return prev.filter(id => id !== itemId);
-      } else {
-        showSuccess('Favorilere eklendi');
-        return [...prev, itemId];
-      }
-    });
+  const getIconSource = (iconName) => {
+    const iconMap = {
+      'ajandaicon': require('../assets/images/ajandaicon.png'),
+      'notlaricon': require('../assets/images/notlaricon.png'),
+      'gorevlericon': require('../assets/images/gorevlericon.png'),
+      'haberlericon': require('../assets/images/haberlericon.png'),
+      'rediicon': require('../assets/images/rediicon.png'),
+      'favicon': require('../assets/images/favicon.png'),
+      'destekicon': require('../assets/images/destekicon.png'),
+      'favporticon': require('../assets/images/favporticon.png'),
+      'komisyonicon': require('../assets/images/komisyonicon.png'),
+      'portanaicon': require('../assets/images/portanaicon.png'),
+      'talanaicon': require('../assets/images/talanaicon.png'),
+      'logo': require('../assets/images/logo.png'),
+    };
+    return iconMap[iconName] || require('../assets/images/logo.png');
   };
 
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-    showSuccess(isDarkMode ? 'Açık tema aktif' : 'Koyu tema aktif');
-  };
-
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    loadPortfolios().finally(() => setRefreshing(false));
-  }, [loadPortfolios]);
-
-  const formatPrice = (price) => {
-    if (price >= 1000000) {
-      return (price / 1000000).toFixed(1) + 'M TL';
-    } else if (price >= 1000) {
-      return (price / 1000).toFixed(0) + 'K TL';
-    }
-    return price.toLocaleString() + ' TL';
-  };
-
-  const applyFilters = useCallback((newFilters) => {
-    setFilters(newFilters);
-    setShowFilters(false);
-  }, []);
-
-  const clearFilters = useCallback(() => {
-    setFilters({});
-    setSearchQuery('');
-    setShowOnlyFavorites(false);
-  }, []);
-
-  const filteredPortfolios = useMemo(() => {
-    let filtered = portfolios;
-
-    // Search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(item =>
-        item.title.toLowerCase().includes(query) ||
-        item.city.toLowerCase().includes(query) ||
-        item.district.toLowerCase().includes(query) ||
-        item.neighborhood.toLowerCase().includes(query)
-      );
-    }
-
-    // Favorites filter
-    if (showOnlyFavorites) {
-      filtered = filtered.filter(item => favorites.includes(item.id));
-    }
-
-    // Other filters
-    if (filters.city) {
-      filtered = filtered.filter(item => item.city === filters.city);
-    }
-    if (filters.district) {
-      filtered = filtered.filter(item => item.district === filters.district);
-    }
-    if (filters.propertyType) {
-      filtered = filtered.filter(item => item.propertyType === filters.propertyType);
-    }
-    if (filters.listingStatus) {
-      filtered = filtered.filter(item => item.listingStatus === filters.listingStatus);
-    }
-    if (filters.minPrice) {
-      filtered = filtered.filter(item => item.price >= filters.minPrice);
-    }
-    if (filters.maxPrice) {
-      filtered = filtered.filter(item => item.price <= filters.maxPrice);
-    }
-
-    return filtered;
-  }, [portfolios, searchQuery, showOnlyFavorites, favorites, filters]);
-
-  const activeFilters = useMemo(() => {
-    let count = 0;
-    if (searchQuery.trim()) count++;
-    if (showOnlyFavorites) count++;
-    if (filters.city) count++;
-    if (filters.district) count++;
-    if (filters.propertyType) count++;
-    if (filters.listingStatus) count++;
-    if (filters.minPrice) count++;
-    if (filters.maxPrice) count++;
-    return count;
-  }, [searchQuery, showOnlyFavorites, filters]);
-
-  const renderPortfolioCard = ({ item }) => (
-    <Animated.View style={{ opacity: fadeAnim }}>
-      <ListingCard
-        item={item}
-        onPress={() => navigation.navigate('PropertyDetail', { portfolio: item })}
-        onFavorite={toggleFavorite}
-        isFavorite={favorites.includes(item.id)}
-      />
-    </Animated.View>
+  const renderFeatureIcon = (iconName, label, onPress) => (
+    <TouchableOpacity 
+      style={styles.featureIconContainer} 
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
+      <Image source={getIconSource(iconName)} style={styles.featureIcon} />
+      <Text style={styles.featureLabel}>{label}</Text>
+    </TouchableOpacity>
   );
 
-  const renderHeader = () => {
-    const totalPortfolios = portfolios.length;
-    const avgPrice = portfolios.length > 0 
-      ? portfolios.reduce((sum, item) => sum + item.price, 0) / portfolios.length 
-      : 0;
-    
-    return (
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <Text style={styles.mainTitle}>Portföyler</Text>
-          <Text style={styles.mainSubtitle}>
-            {favorites.length > 0 ? `${favorites.length} favori portföy` : 'En iyi fırsatları keşfedin'}
-          </Text>
-        </View>
-
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{totalPortfolios}</Text>
-            <Text style={styles.statLabel}>Toplam</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{formatPrice(avgPrice)}</Text>
-            <Text style={styles.statLabel}>Ortalama</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{filteredPortfolios.length}</Text>
-            <Text style={styles.statLabel}>Gösterilen</Text>
-          </View>
-        </View>
-
-        <View style={styles.headerActions}>
-          <TouchableOpacity
-            style={[styles.favoriteFilterButton, showOnlyFavorites && styles.favoriteFilterButtonActive]}
-            onPress={() => setShowOnlyFavorites(!showOnlyFavorites)}
-          >
-            <Text style={[styles.favoriteFilterIcon, showOnlyFavorites && styles.favoriteFilterIconActive]}>
-              ❤️
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.filterButton, activeFilters > 0 && styles.filterButtonActive]}
-            onPress={() => setShowFilters(true)}
-          >
-            <Text style={styles.filterIcon}>F</Text>
-            <Text style={[styles.filterButtonText, activeFilters > 0 && styles.filterButtonTextActive]}>
-              {activeFilters > 0 ? 'Filtre (' + activeFilters + ')' : 'Filtre'}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.themeButton}
-            onPress={toggleTheme}
-          >
-            <Text style={styles.themeIcon}>
-              {isDarkMode ? '☀️' : '🌙'}
-            </Text>
-          </TouchableOpacity>
-
-          {activeFilters > 0 && (
-            <TouchableOpacity style={styles.clearButton} onPress={clearFilters}>
-              <Text style={styles.clearButtonText}>Temizle</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {showSearch && (
-          <View style={styles.searchContainer}>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Portföy ara..."
-              placeholderTextColor="#999"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-          </View>
-        )}
-      </View>
-    );
-  };
-
-  const renderEmptyComponent = () => (
-    <View style={styles.emptyContainer}>
-      <Text style={styles.emptyIcon}>?</Text>
-      <Text style={styles.emptyText}>Uygun portföy bulunamadı</Text>
-      <Text style={styles.emptySubtext}>Filtrelerinizi değiştirmeyi deneyin</Text>
-    </View>
+  const renderLargeToggleButton = (title, icon, isSelected, onPress) => (
+      <TouchableOpacity 
+      style={[styles.largeToggleButton, isSelected && styles.largeToggleButtonSelected]} 
+      onPress={onPress}
+    >
+      <Image source={getIconSource(icon)} style={styles.largeToggleIcon} />
+      <Text style={[styles.largeToggleText, isSelected && styles.largeToggleTextSelected]}>{title}</Text>
+    </TouchableOpacity>
   );
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Header title="Talepify" />
-        <View style={styles.loadingContent}>
-          <ActivityIndicator size="large" color="#ff4d4f" />
-          <Text style={styles.loadingText}>Portföyler yükleniyor...</Text>
-        </View>
-      </View>
-    );
-  }
+  const renderSmallToggleButton = (title, isSelected, onPress) => (
+          <TouchableOpacity 
+      style={[styles.smallToggleButton, isSelected && styles.smallToggleButtonSelected]} 
+      onPress={onPress}
+    >
+      <Text style={[styles.smallToggleText, isSelected && styles.smallToggleTextSelected]}>{title}</Text>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
-      <Header title="Talepify" />
+            {/* Kırmızı Header */}
+      <Animated.View 
+        style={[
+          styles.redHeader,
+          {
+            transform: [{ translateY: headerSlideAnim }]
+          }
+        ]}
+      >
+        <View style={styles.headerLeft}>
+          <Image source={require('../assets/images/logo.png')} style={styles.logo} />
+        </View>
+        <View style={styles.headerRight}>
+          <TouchableOpacity style={styles.notificationButton}>
+            <Image source={require('../assets/images/notification.png')} style={styles.notificationIcon} />
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
 
-      <FlatList
-        data={filteredPortfolios}
-        renderItem={renderPortfolioCard}
-        keyExtractor={(item) => String(item.id)}
-        numColumns={2}
-        columnWrapperStyle={styles.cardRow}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-        ListHeaderComponent={renderHeader}
-        ListEmptyComponent={renderEmptyComponent}
-        refreshing={refreshing}
-        onRefresh={onRefresh}
-      />
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <Animated.View style={{ 
+          opacity: fadeAnim,
+          transform: [
+            { translateY: slideUpAnim },
+            { scale: scaleAnim }
+          ]
+        }}>
+          {/* Görev Kartı */}
+          <View style={styles.taskCard}>
+            <View style={styles.taskHeader}>
+              <Text style={styles.taskTitle}>Bu gün tamamladığın görevler...</Text>
+              <View style={styles.progressContainer}>
+                <Text style={styles.progressText}>%67</Text>
+                <View style={styles.progressArc}>
+                  <View style={styles.progressFill} />
+                </View>
+              </View>
+              </View>
+            <View style={styles.divider} />
+            
+            {/* İlk Satır İkonları */}
+            <View style={styles.iconRow}>
+              {renderFeatureIcon('ajandaicon', 'Ajanda', () => navigation.navigate('Calendar'))}
+              {renderFeatureIcon('notlaricon', 'Notlarım', () => navigation.navigate('Notes'))}
+              {renderFeatureIcon('gorevlericon', 'Görevler', () => navigation.navigate('Tasks'))}
+              {renderFeatureIcon('haberlericon', 'Haberler', () => navigation.navigate('News'))}
+              </View>
+          </View>
 
-      <FiltersModal visible={showFilters} onClose={() => setShowFilters(false)} onApply={applyFilters} />
-      <SuccessModal />
+          {/* İkinci Satır İkonları */}
+          <View style={styles.secondIconRow}>
+            {renderFeatureIcon('rediicon', 'Kredi Hesaplama', () => navigation.navigate('CreditCalculation'))}
+            {renderFeatureIcon('favicon', 'Favori Talepler', () => navigation.navigate('FavoriteRequests'))}
+            {renderFeatureIcon('destekicon', 'Müşteri Destek', () => navigation.navigate('CustomerSupport'))}
+            {renderFeatureIcon('favporticon', 'Favori Portföyler', () => navigation.navigate('FavoritePortfolios'))}
+            {renderFeatureIcon('komisyonicon', 'Komisyon Hesaplama', () => navigation.navigate('CommissionCalculation'))}
+        </View>
+
+
+    </Animated.View>
+      </ScrollView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  loadingContainer: { flex: 1, backgroundColor: theme.colors.background },
-  loadingContent: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: theme.colors.text, fontSize: 16, marginTop: 16 },
-
-  listContainer: { padding: 16, paddingTop: 8 },
-  header: { marginBottom: 24 },
-  headerContent: { alignItems: 'center', marginBottom: 24 },
-  mainTitle: { fontSize: 32, fontWeight: '700', color: theme.colors.text, marginBottom: 8, letterSpacing: 1 },
-  mainSubtitle: { fontSize: 16, color: '#ff0000', opacity: 0.8 },
-  statsContainer: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-around', 
-    marginBottom: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 12,
-    padding: 12,
+  container: {
+    flex: 1,
+    backgroundColor: '#0A191E', // Koyu teal arka plan
   },
-  statItem: { alignItems: 'center' },
-  statNumber: { fontSize: 18, fontWeight: '700', color: '#ff0000' },
-  statLabel: { fontSize: 12, color: theme.colors.textSecondary, marginTop: 2 },
-
-  headerActions: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  favoriteFilterButton: {
-    padding: 10,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    marginRight: 8,
+  
+  // Kırmızı Header
+  redHeader: {
+    backgroundColor: '#E50000',
+    height: height * 0.4,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingHorizontal: 0,
+    paddingTop: 50,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    position: 'absolute',
+    top: 0,
+    left: 7,
+    right: 7,
+    zIndex: 0,
   },
-  favoriteFilterButtonActive: {
-    backgroundColor: '#ff4d4f',
-  },
-  favoriteFilterIcon: { fontSize: 16 },
-  favoriteFilterIconActive: { fontSize: 18 },
-  themeButton: {
-    padding: 10,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    marginLeft: 8,
-  },
-  themeIcon: { fontSize: 16 },
-  filterButton: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: 'rgba(255, 0, 0, 0.1)',
-    borderWidth: 1, borderColor: '#ff0000',
-    borderRadius: 8, paddingHorizontal: 16, paddingVertical: 12,
-    flex: 1, marginRight: 12,
-  },
-  filterButtonActive: { backgroundColor: '#ff0000' },
-  filterIcon: { fontSize: 20, marginRight: 8, color: theme.colors.white },
-  filterButtonText: { color: '#ff0000', fontSize: 14, fontWeight: '600' },
-  filterButtonTextActive: { color: theme.colors.white },
-
-  clearButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 8, paddingHorizontal: 16, paddingVertical: 12,
-  },
-  clearButtonText: { color: theme.colors.text, fontSize: 14, fontWeight: '600' },
-
-  searchContainer: { marginTop: 16 },
-  searchInput: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    color: theme.colors.text,
-    fontSize: 16,
-  },
-
-  cardRow: { justifyContent: 'space-between', marginBottom: 16 },
-
-  emptyContainer: {
+  
+  headerLeft: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 60,
+    justifyContent: 'flex-start',
   },
-  emptyIcon: { 
-    fontSize: 48, 
-    color: theme.colors.gray, 
-    marginBottom: 16 
+  
+  logo: {
+    width: 235,
+    height: 40,
+    marginRight: 0,
+    resizeMode: 'contain',
   },
-  emptyText: { 
-    fontSize: 18, 
-    color: theme.colors.text, 
+  
+  appName: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  
+  notificationButton: {
+    marginRight: 25,
+  },
+  
+  notificationIcon: {
+    width: 45,
+    height: 45,
+  },
+  
+
+  
+  // Ana İçerik
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 125,
+  },
+  
+  // Görev Kartı
+  taskCard: {
+    backgroundColor: '#00141c',
+    borderRadius: 19,
+    padding: 17,
+    marginTop: 0,
+    marginBottom: 30,
+    marginHorizontal: 0,
+  },
+  
+  taskHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  
+  taskTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '500',
+    flex: 1,
+  },
+  
+  progressContainer: {
+    alignItems: 'center',
+  },
+  
+  progressText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  
+  progressArc: {
+    width: 40,
+    height: 20,
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: '#333333',
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  
+  progressFill: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '67%',
+    height: '100%',
+    backgroundColor: '#E50000',
+    borderRadius: 20,
+  },
+  
+  divider: {
+    height: 1,
+    backgroundColor: '#FFFFFF',
+    marginVertical: 15,
+  },
+  
+  // İkon Satırları
+  iconRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  
+  secondIconRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 130,
+  },
+  
+  featureIconContainer: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  
+  featureIcon: {
+    width: 40,
+    height: 40,
     marginBottom: 8,
-    fontWeight: '600',
   },
-  emptySubtext: { 
+  
+  featureLabel: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  
+  // Kırmızı ikili butonlar
+  duoWrap: {
+    marginTop: 50,
+    backgroundColor: 'transparent',
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E50000',
+    shadowColor: '#000', 
+    shadowOpacity: 0.25, 
+    shadowRadius: 8, 
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
+  },
+  
+  duoBtn: { 
+    flex: 1, 
+    paddingVertical: 18, 
+    alignItems: 'center', 
+    justifyContent: 'center' 
+  },
+  
+  duoActive: { 
+    backgroundColor: 'transparent' 
+  },
+  
+  duoDivider: { 
+    width: 1, 
+    backgroundColor: '#E50000' 
+  },
+  
+  duoIcon: { 
+    width: 28, 
+    height: 28, 
+    resizeMode: 'contain', 
+    marginBottom: 4 
+  },
+  
+  duoTxt: { 
+    color: '#fff', 
+    fontSize: 16, 
+    fontWeight: '800' 
+  },
+
+  // Alt satır - Kısa yükseklikli butonlar
+  duoWrapShort: {
+    marginTop: 20,
+    backgroundColor: 'transparent',
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E50000',
+    shadowColor: '#000', 
+    shadowOpacity: 0.15, 
+    shadowRadius: 6, 
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+  },
+  
+  duoBtnShort: { 
+    flex: 1, 
+    paddingVertical: 12, 
+    alignItems: 'center', 
+    justifyContent: 'center' 
+  },
+  
+  duoTxtShort: { 
+    color: '#fff', 
     fontSize: 14, 
-    color: theme.colors.lightGray 
+    fontWeight: '600' 
   },
 });
 

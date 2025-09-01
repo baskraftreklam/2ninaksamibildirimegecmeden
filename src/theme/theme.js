@@ -1,85 +1,70 @@
-import * as eva from '@eva-design/eva';
-import custom from './theme.json';
-
-// eva.dark + marka renk override
-export const darkTheme = {
-  ...eva.dark,
-  ...custom,
-};
-
-export const customMapping = {};
-
 export const theme = {
   colors: {
-    primary: '#ff0000', // Tam kırmızı - GitHub projesindeki ana renk
-    primaryHover: '#e60000', // Kırmızı üzerine gelince daha koyu ton
-    background: '#07141e', // Koyu arka plan
-    cardBg: 'rgba(7, 20, 30, 0.8)',
-    headerBg: 'rgba(7, 20, 30, 0.8)',
-    text: '#e9ecef',
-    textSecondary: '#adb5bd',
-    border: 'rgba(255, 255, 255, 0.18)',
-    inputBg: '#2d3748',
-    inputBorder: '#4a5568',
-    success: '#28a745',
-    info: '#007bff',
+    // Ana renkler
+    primary: '#ff2d2d',
+    secondary: '#4f46e5',
+    success: '#10b981',
+    warning: '#f59e0b',
+    error: '#ef4444',
+    info: '#3b82f6',
+    
+    // Arka plan renkleri
+    background: '#07141e',
+    cardBg: '#0f1a23',
+    surface: '#1a2332',
+    
+    // Metin renkleri
+    text: '#e5eef5',
+    textSecondary: '#94a3b8',
+    textMuted: '#64748b',
+    
+    // Kenarlık renkleri
+    border: 'rgba(255,255,255,0.08)',
+    borderLight: 'rgba(255,255,255,0.12)',
+    
+    // Input renkleri
+    inputBg: '#1a2332',
+    inputBorder: 'rgba(255,255,255,0.15)',
+    inputText: '#e5eef5',
+    
+    // Özel renkler
     white: '#ffffff',
     black: '#000000',
-    gray: '#666666',
-    lightGray: '#999999',
+    transparent: 'transparent',
+    primaryLight: 'rgba(255, 45, 45, 0.1)',
+    primaryGradient: '#ff2d2d',
+    
+    // Overlay renkleri
+    overlay: 'rgba(0,0,0,0.5)',
+    backdrop: 'rgba(0,0,0,0.3)',
   },
-  
   spacing: {
     xs: 4,
     sm: 8,
-    md: 16,
-    lg: 24,
-    xl: 32,
-    xxl: 48,
+    md: 12,
+    lg: 16,
+    xl: 24,
+    xxl: 32,
   },
-  
   borderRadius: {
     sm: 4,
     md: 8,
     lg: 12,
     xl: 16,
   },
-  
-  shadows: {
-    card: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
-    hover: '0 12px 32px 0 rgba(0, 0, 0, 0.45)',
+  fontSizes: {
+    xs: 10,
+    sm: 12,
+    md: 14,
+    lg: 16,
+    xl: 18,
+    xxl: 24,
   },
-  
-  typography: {
-    h1: {
-      fontSize: 32,
-      fontWeight: '700',
-      lineHeight: 40,
-    },
-    h2: {
-      fontSize: 24,
-      fontWeight: '600',
-      lineHeight: 32,
-    },
-    h3: {
-      fontSize: 20,
-      fontWeight: '600',
-      lineHeight: 28,
-    },
-    body: {
-      fontSize: 16,
-      fontWeight: '400',
-      lineHeight: 24,
-    },
-    caption: {
-      fontSize: 14,
-      fontWeight: '400',
-      lineHeight: 20,
-    },
-    small: {
-      fontSize: 12,
-      fontWeight: '400',
-      lineHeight: 16,
-    },
+  fontWeights: {
+    light: '300',
+    normal: '400',
+    medium: '500',
+    semibold: '600',
+    bold: '700',
   },
 };

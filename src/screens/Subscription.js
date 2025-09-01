@@ -313,6 +313,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: theme.colors.text,
     marginBottom: theme.spacing.sm,
+
   },
   statusText: {
     fontSize: 16,
@@ -403,3 +404,4 @@ const styles = StyleSheet.create({
 });
 
 export default Subscription;
+

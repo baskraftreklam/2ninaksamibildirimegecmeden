@@ -9,6 +9,7 @@ import {
   Dimensions,
   Alert,
   Image,
+  Modal,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../theme/theme';

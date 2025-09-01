@@ -2,7 +2,8 @@
 import React from 'react';
 import { StatusBar } from 'react-native';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
-import MainTabs from './src/navigation/MainTabs';
+import { AuthProvider } from './src/context/AuthContext';
+import RootNavigator from './src/navigation/RootNavigator';
 
 const theme = {
   ...DefaultTheme,
@@ -18,9 +19,11 @@ const theme = {
 
 export default function App() {
   return (
-    <NavigationContainer theme={theme}>
-      <StatusBar barStyle="light-content" backgroundColor="#07141e" />
-      <MainTabs />
-    </NavigationContainer>
+    <AuthProvider>
+      <NavigationContainer theme={theme}>
+        <StatusBar barStyle="light-content" backgroundColor="#07141d" />
+        <RootNavigator />
+      </NavigationContainer>
+    </AuthProvider>
   );
 }

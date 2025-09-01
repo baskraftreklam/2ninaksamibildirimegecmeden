@@ -10,25 +10,22 @@ import {
   Modal
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { theme } from '../theme/theme';
 
 const { width } = Dimensions.get('window');
 
-const Header = ({ title = 'Talepify', showMenu = true, showBack = false }) => {
+const Header = ({ title = 'Talepify', showMenu = true, showBack = false, scrollY = 0 }) => {
   const navigation = useNavigation();
   const [menuVisible, setMenuVisible] = useState(false);
   const [slideAnim] = useState(new Animated.Value(-300));
 
   const toggleMenu = () => {
     if (menuVisible) {
-      // Close menu
       Animated.timing(slideAnim, {
         toValue: -300,
         duration: 300,
         useNativeDriver: true,
       }).start(() => setMenuVisible(false));
     } else {
-      // Open menu
       setMenuVisible(true);
       Animated.timing(slideAnim, {
         toValue: 0,
@@ -40,7 +37,6 @@ const Header = ({ title = 'Talepify', showMenu = true, showBack = false }) => {
 
   const handleLogout = () => {
     toggleMenu();
-    // Navigate to login
     navigation.reset({
       index: 0,
       routes: [{ name: 'Login' }],
@@ -54,19 +50,8 @@ const Header = ({ title = 'Talepify', showMenu = true, showBack = false }) => {
 
   return (
     <View style={styles.header}>
-      {/* Logo and Title */}
+      {/* Sol taraf: Logo */}
       <View style={styles.leftSection}>
-        {showBack && (
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.backIcon}>
-              <Text>←</Text>
-            </Text>
-          </TouchableOpacity>
-        )}
-        
         <Image 
           source={require('../assets/images/logo.png')}
           style={styles.logo}
@@ -74,17 +59,34 @@ const Header = ({ title = 'Talepify', showMenu = true, showBack = false }) => {
         />
       </View>
 
-      {/* Menu Button */}
-      {showMenu && (
-        <TouchableOpacity 
-          style={styles.menuButton}
-          onPress={toggleMenu}
-        >
-          <Text style={styles.menuIcon}>
-            <Text>☰</Text>
-          </Text>
+      {/* Sağ taraf: Bildirim ikonu ve menü */}
+      <View style={styles.rightSection}>
+        {/* Bildirim ikonu */}
+        <TouchableOpacity style={styles.notificationContainer}>
+          <Image 
+            source={require('../assets/images/notification.png')}
+            style={styles.notificationIcon}
+            resizeMode="contain"
+          />
+          <View style={styles.notificationBadge}>
+            <Text style={styles.badgeText}>3</Text>
+          </View>
         </TouchableOpacity>
-      )}
+
+        {/* Menü tuşu */}
+        {showMenu && (
+          <TouchableOpacity 
+            style={styles.menuButton}
+            onPress={toggleMenu}
+          >
+            <Image 
+              source={require('../assets/images/menu.png')}
+              style={styles.menuIcon}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+        )}
+      </View>
 
       {/* Side Menu Modal */}
       <Modal
@@ -104,86 +106,49 @@ const Header = ({ title = 'Talepify', showMenu = true, showBack = false }) => {
               { transform: [{ translateX: slideAnim }] }
             ]}
           >
-            <TouchableOpacity 
-              style={styles.menuHeader}
-              onPress={() => handleNavigate('Profile')}
-            >
-              <View style={styles.profileSection}>
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarIcon}>
-                    <Text>👤</Text>
-                  </Text>
-                </View>
-                <View style={styles.profileInfo}>
-                  <Text style={styles.profileName}>
-                    <Text>Kullanıcı Adı</Text>
-                  </Text>
-                  <Text style={styles.profileEmail}>
-                    <Text>kullanici@email.com</Text>
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
+            <View style={styles.menuHeader}>
+              <Text style={styles.menuTitle}>Menü</Text>
+            </View>
 
             <View style={styles.menuItems}>
               <TouchableOpacity 
                 style={styles.menuItem}
                 onPress={() => handleNavigate('Home')}
               >
-                <Text style={styles.menuIcon}>
-                  <Text>🏠</Text>
-                </Text>
-                <Text style={styles.menuItemText}>
-                  <Text>Ana Sayfa</Text>
-                </Text>
+                <Text style={styles.menuIcon}>🏠</Text>
+                <Text style={styles.menuItemText}>Ana Sayfa</Text>
               </TouchableOpacity>
 
               <TouchableOpacity 
                 style={styles.menuItem}
                 onPress={() => handleNavigate('AddPortfolio')}
               >
-                <Text style={styles.menuIcon}>
-                  <Text>➕</Text>
-                </Text>
-                <Text style={styles.menuItemText}>
-                  <Text>Portföy Ekle</Text>
-                </Text>
+                <Text style={styles.menuIcon}>➕</Text>
+                <Text style={styles.menuItemText}>Portföy Ekle</Text>
               </TouchableOpacity>
 
               <TouchableOpacity 
                 style={styles.menuItem}
                 onPress={() => handleNavigate('RequestForm')}
               >
-                <Text style={styles.menuIcon}>
-                  <Text>📄</Text>
-                </Text>
-                <Text style={styles.menuItemText}>
-                  <Text>Talep Ekle</Text>
-                </Text>
+                <Text style={styles.menuIcon}>📄</Text>
+                <Text style={styles.menuItemText}>Talep Ekle</Text>
               </TouchableOpacity>
 
               <TouchableOpacity 
                 style={styles.menuItem}
                 onPress={() => handleNavigate('DemandPool')}
               >
-                <Text style={styles.menuIcon}>
-                  <Text>👥</Text>
-                </Text>
-                <Text style={styles.menuItemText}>
-                  <Text>Talep Havuzu</Text>
-                </Text>
+                <Text style={styles.menuIcon}>👥</Text>
+                <Text style={styles.menuItemText}>Talep Havuzu</Text>
               </TouchableOpacity>
 
               <TouchableOpacity 
                 style={styles.menuItem}
                 onPress={() => handleNavigate('Calendar')}
               >
-                <Text style={styles.menuIcon}>
-                  <Text>📅</Text>
-                </Text>
-                <Text style={styles.menuItemText}>
-                  <Text>Takvim</Text>
-                </Text>
+                <Text style={styles.menuIcon}>📅</Text>
+                <Text style={styles.menuItemText}>Takvim</Text>
               </TouchableOpacity>
 
               <View style={styles.menuDivider} />
@@ -192,24 +157,16 @@ const Header = ({ title = 'Talepify', showMenu = true, showBack = false }) => {
                 style={styles.menuItem}
                 onPress={() => handleNavigate('Profile')}
               >
-                <Text style={styles.menuIcon}>
-                  <Text>👤</Text>
-                </Text>
-                <Text style={styles.menuItemText}>
-                  <Text>Profil</Text>
-                </Text>
+                <Text style={styles.menuIcon}>👤</Text>
+                <Text style={styles.menuItemText}>Profil</Text>
               </TouchableOpacity>
 
               <TouchableOpacity 
                 style={styles.menuItem}
                 onPress={() => handleNavigate('Settings')}
               >
-                <Text style={styles.menuIcon}>
-                  <Text>⚙️</Text>
-                </Text>
-                <Text style={styles.menuItemText}>
-                  <Text>Ayarlar</Text>
-                </Text>
+                <Text style={styles.menuIcon}>⚙️</Text>
+                <Text style={styles.menuItemText}>Ayarlar</Text>
               </TouchableOpacity>
 
               <View style={styles.menuDivider} />
@@ -218,12 +175,8 @@ const Header = ({ title = 'Talepify', showMenu = true, showBack = false }) => {
                 style={[styles.menuItem, styles.logoutItem]}
                 onPress={handleLogout}
               >
-                <Text style={[styles.menuIcon, styles.logoutIcon]}>
-                  <Text>🚪</Text>
-                </Text>
-                <Text style={[styles.menuItemText, styles.logoutText]}>
-                  <Text>Çıkış Yap</Text>
-                </Text>
+                <Text style={[styles.menuIcon, styles.logoutIcon]}>🚪</Text>
+                <Text style={[styles.menuItemText, styles.logoutText]}>Çıkış Yap</Text>
               </TouchableOpacity>
             </View>
           </Animated.View>
@@ -239,51 +192,72 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: theme.colors.headerBg,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-    paddingTop: 50, // Status bar için
+    paddingVertical: 1, // Daha da azaltıldı
+    backgroundColor: 'rgba(15, 26, 35, 0.15)', // Çok hafif saydam
+    paddingTop: 8, // Daha da azaltıldı
+    // Blur efekti için gölge
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 12, // Android için gölge
   },
   leftSection: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rightSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
-  },
-  backButton: {
-    marginRight: 12,
-    padding: 4,
+    gap: 12,
   },
   logo: {
-    width: 40,
-    height: 40,
+    width: 160, // Logo boyutu 235x50px olarak ayarlandı
+    height: 40, // Logo boyutu 235x50px olarak ayarlandı
   },
-  title: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: theme.colors.text,
+  notificationContainer: {
+    position: 'relative',
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    // Tüm border ve outline'lar kaldırıldı
+  },
+  notificationIcon: {
+    width: 32,
+    height: 32,
+    // Border yok
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#ff4d4f',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ffffff',
+  },
+  badgeText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   menuButton: {
-    padding: 10,
+    padding: 8, // Padding azaltıldı
     borderRadius: 8,
     backgroundColor: '#ff0000',
-    shadowColor: '#ff0000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  backIcon: {
-    fontSize: 24,
-    color: theme.colors.text,
+    borderWidth: 0,
   },
   menuIcon: {
-    fontSize: 24,
-    color: theme.colors.text,
-  },
-  avatarIcon: {
-    fontSize: 32,
-    color: '#ff0000',
+    width: 24,
+    height: 24,
   },
   modalOverlay: {
     flex: 1,
@@ -305,33 +279,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
-  profileSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(255, 77, 79, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 77, 79, 0.3)',
-  },
-  profileInfo: {
-    flex: 1,
-  },
-  profileName: {
-    fontSize: 16,
+  menuTitle: {
+    fontSize: 20,
     fontWeight: '600',
-    color: '#fff',
-    marginBottom: 2,
-  },
-  profileEmail: {
-    fontSize: 12,
-    color: '#ccc',
+    color: '#ffffff',
+    textAlign: 'center',
   },
   menuItems: {
     flex: 1,
@@ -347,7 +299,7 @@ const styles = StyleSheet.create({
   },
   menuItemText: {
     fontSize: 16,
-    color: '#fff',
+    color: '#ffffff',
     marginLeft: 16,
     fontWeight: '500',
   },

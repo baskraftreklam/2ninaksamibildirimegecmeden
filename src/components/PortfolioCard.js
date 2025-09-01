@@ -1,55 +1,63 @@
-// src/components/ListingCard.js
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { theme } from '../theme/theme';
 
 const { width } = Dimensions.get('window');
 
-const ListingCard = ({ 
-  listing, 
+const PortfolioCard = ({ 
+  portfolio, 
   onPress, 
   onEdit, 
   onDelete, 
-  isEditable = false 
+  isEditable = false,
+  showActions = true 
 }) => {
   // Güvenlik kontrolü
-  if (!listing) {
-    console.warn('ListingCard: listing prop is undefined');
+  if (!portfolio) {
+    console.warn('PortfolioCard: portfolio prop is undefined');
     return null;
   }
 
   const {
     id,
     title,
-    city,
-    district,
-    neighborhood,
+    description,
+    location,
     price,
-    listingStatus,
+    images = [],
     propertyType,
-    squareMeters,
-    roomCount,
-    buildingAge,
-    floor,
-    parking,
-    isPublished,
-    images = []
-  } = listing;
+    status = 'active',
+    createdAt,
+    contactInfo
+  } = portfolio;
 
   const formatPrice = (price) => {
     if (!price) return 'Fiyat belirtilmemiş';
-    if (listingStatus === 'Kiralık') {
-      return `₺${price.toLocaleString()}/ay`;
-    }
     return `₺${price.toLocaleString()}`;
   };
 
-  const getStatusColor = () => {
-    return isPublished ? theme.colors.success : theme.colors.warning;
+  const formatDate = (date) => {
+    if (!date) return '';
+    const d = new Date(date);
+    return d.toLocaleDateString('tr-TR');
   };
 
-  const getStatusText = () => {
-    return isPublished ? 'Yayında' : 'Taslak';
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'active': return theme.colors.success;
+      case 'pending': return theme.colors.warning;
+      case 'inactive': return theme.colors.error;
+      default: return theme.colors.primary;
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'active': return 'Aktif';
+      case 'pending': return 'Beklemede';
+      case 'inactive': return 'Pasif';
+      default: return 'Bilinmiyor';
+    }
   };
 
   return (
@@ -67,20 +75,20 @@ const ListingCard = ({
           />
         ) : (
           <View style={styles.placeholderImage}>
-            <Text style={styles.placeholderText}>🏠</Text>
+            <Text style={styles.placeholderText}>📷</Text>
           </View>
         )}
         
         <View style={styles.statusBadge}>
-          <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />
-          <Text style={styles.statusText}>{getStatusText()}</Text>
+          <View style={[styles.statusDot, { backgroundColor: getStatusColor(status) }]} />
+          <Text style={styles.statusText}>{getStatusText(status)}</Text>
         </View>
 
-        {isEditable && (
+        {showActions && isEditable && (
           <View style={styles.actionButtons}>
             <TouchableOpacity 
               style={[styles.actionButton, styles.editButton]} 
-              onPress={() => onEdit && onEdit(listing)}
+              onPress={() => onEdit && onEdit(portfolio)}
             >
               <Text style={styles.actionButtonText}>✏️</Text>
             </TouchableOpacity>
@@ -105,50 +113,45 @@ const ListingCard = ({
           </Text>
         </View>
 
+        <Text style={styles.description} numberOfLines={3}>
+          {description || 'Açıklama belirtilmemiş'}
+        </Text>
+
         <View style={styles.details}>
-          <View style={styles.detailRow}>
-            <View style={styles.detailItem}>
-              <Text style={styles.detailIcon}>📍</Text>
-              <Text style={styles.detailText}>
-                {city}, {district}, {neighborhood}
-              </Text>
-            </View>
+          <View style={styles.detailItem}>
+            <Text style={styles.detailIcon}>📍</Text>
+            <Text style={styles.detailText} numberOfLines={1}>
+              {location || 'Konum belirtilmemiş'}
+            </Text>
           </View>
 
-          <View style={styles.detailRow}>
-            <View style={styles.detailItem}>
-              <Text style={styles.detailIcon}>🏠</Text>
-              <Text style={styles.detailText}>
-                {propertyType} • {roomCount} • {squareMeters}m²
-              </Text>
-            </View>
+          <View style={styles.detailItem}>
+            <Text style={styles.detailIcon}>🏠</Text>
+            <Text style={styles.detailText}>
+              {propertyType || 'Tip belirtilmemiş'}
+            </Text>
           </View>
 
-          <View style={styles.detailRow}>
+          {contactInfo && (
             <View style={styles.detailItem}>
-              <Text style={styles.detailIcon}>🏗️</Text>
-              <Text style={styles.detailText}>
-                {buildingAge} yaşında • {floor}. kat
+              <Text style={styles.detailIcon}>📞</Text>
+              <Text style={styles.detailText} numberOfLines={1}>
+                {contactInfo}
               </Text>
-            </View>
-          </View>
-
-          {parking && (
-            <View style={styles.detailRow}>
-              <View style={styles.detailItem}>
-                <Text style={styles.detailIcon}>🚗</Text>
-                <Text style={styles.detailText}>Otopark mevcut</Text>
-              </View>
             </View>
           )}
         </View>
 
         <View style={styles.footer}>
-          <View style={styles.listingStatus}>
-            <Text style={[styles.listingStatusText, { color: theme.colors.primary }]}>
-              {listingStatus}
-            </Text>
-          </View>
+          <Text style={styles.dateText}>
+            {formatDate(createdAt)}
+          </Text>
+          
+          {status === 'pending' && (
+            <View style={styles.pendingBadge}>
+              <Text style={styles.pendingText}>Onay Bekliyor</Text>
+            </View>
+          )}
         </View>
       </View>
     </TouchableOpacity>
@@ -171,7 +174,7 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     position: 'relative',
-    height: 180,
+    height: 200,
   },
   image: {
     width: '100%',
@@ -248,37 +251,38 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
   title: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
     color: theme.colors.text,
     flex: 1,
     marginRight: theme.spacing.sm,
   },
   price: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
     color: theme.colors.primary,
   },
-  details: {
-    gap: theme.spacing.xs,
+  description: {
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+    lineHeight: 20,
     marginBottom: theme.spacing.md,
   },
-  detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  details: {
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
   },
   detailItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
   },
   detailIcon: {
-    fontSize: 14,
+    fontSize: 16,
     marginRight: theme.spacing.sm,
-    width: 16,
+    width: 20,
   },
   detailText: {
-    fontSize: 13,
+    fontSize: 14,
     color: theme.colors.textSecondary,
     flex: 1,
   },
@@ -290,16 +294,21 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
   },
-  listingStatus: {
-    backgroundColor: theme.colors.primary + '20',
+  dateText: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+  },
+  pendingBadge: {
+    backgroundColor: theme.colors.warning,
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: 4,
     borderRadius: theme.borderRadius.sm,
   },
-  listingStatusText: {
+  pendingText: {
     fontSize: 12,
+    color: theme.colors.white,
     fontWeight: '600',
   },
 });
 
-export default ListingCard;
+export default PortfolioCard;
