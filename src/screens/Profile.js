@@ -173,7 +173,7 @@ const Profile = () => {
           defaultSource={{ uri: getAvatarUrl(currentUser.name) }}
         />
         <TouchableOpacity style={styles.editImageButton}>
-          <Text style={styles.editImageIcon}>📷</Text>
+          <Image source={require('../assets/images/icons/photo.png')} style={styles.editImageIcon} />
         </TouchableOpacity>
       </View>
 
@@ -204,37 +204,24 @@ const Profile = () => {
   const renderPortfolioCard = ({ item: portfolio }) => (
     <View style={styles.portfolioCardContainer}>
       <View style={styles.portfolioCardHeader}>
-        <View style={[
-          styles.statusBadge,
-          portfolio.isPublished ? styles.statusPublished : styles.statusHidden
-        ]}>
-          <Text style={styles.statusIcon}>
-            {portfolio.isPublished ? '👁️' : '🙈'}
-          </Text>
-          <Text style={styles.statusText}>
+        <TouchableOpacity
+          style={[
+            styles.actionButton,
+            portfolio.isPublished ? styles.actionButtonVisible : styles.actionButtonHidden
+          ]}
+          onPress={() => handleToggleVisibility(portfolio.id)}
+        >
+          <View style={[
+            styles.statusDot,
+            portfolio.isPublished ? styles.statusDotPublished : styles.statusDotHidden
+          ]} />
+          <Text style={[
+            styles.actionButtonText,
+            portfolio.isPublished ? styles.actionButtonTextVisible : styles.actionButtonTextHidden
+          ]}>
             {portfolio.isPublished ? 'Yayında' : 'Gizli'}
           </Text>
-        </View>
-        
-        <View style={styles.portfolioCardActions}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => handleToggleVisibility(portfolio.id)}
-          >
-            <Text style={styles.actionButtonText}>
-              {portfolio.isPublished ? 'Gizle' : 'Yayınla'}
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[styles.actionButton, styles.deleteButton]}
-            onPress={() => handleDeletePortfolio(portfolio.id)}
-          >
-            <Text style={[styles.actionButtonText, styles.deleteButtonText]}>
-              Sil
-            </Text>
-          </TouchableOpacity>
-        </View>
+        </TouchableOpacity>
       </View>
       
       <ListingCard
@@ -253,42 +240,25 @@ const Profile = () => {
         <Text style={styles.sectionTitle}>Portföylerim ({userPortfolios.length})</Text>
         <TouchableOpacity
           style={styles.addPortfolioButton}
-          onPress={() => navigation.navigate('AddPortfolio')}
+          onPress={() => navigation.navigate('MyPortfolios')}
         >
-          <Text style={styles.addPortfolioIcon}>+</Text>
+          <Text style={styles.addPortfolioIcon}>👁️</Text>
         </TouchableOpacity>
       </View>
 
-      {userPortfolios.length > 0 ? (
-        <FlatList
-          data={userPortfolios}
-          renderItem={renderPortfolioCard}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          columnWrapperStyle={styles.portfolioRow}
-          showsVerticalScrollIndicator={false}
-          scrollEnabled={false}
-        />
-      ) : (
-        <View style={styles.emptyPortfolios}>
-          <Text style={styles.emptyIcon}>🏠</Text>
-          <Text style={styles.emptyTitle}>Henüz Portföy Yok</Text>
-          <Text style={styles.emptyDescription}>
-            İlk portföyünüzü ekleyerek başlayın
-          </Text>
-          <TouchableOpacity
-            style={styles.addFirstPortfolioButton}
-            onPress={() => navigation.navigate('AddPortfolio')}
-          >
-            <Text style={styles.addFirstPortfolioText}>Portföy Ekle</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      <Text style={styles.portfoliosSubtitle}>
+        Portföylerinizi yönetmek için tıklayın
+      </Text>
     </View>
   );
 
   return (
     <View style={styles.container}>
+      {/* Arka Plan */}
+      <View style={styles.backgroundContainer}>
+        <Image source={require('../assets/images/dark-bg.jpg')} style={styles.backgroundImage} />
+      </View>
+
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           {/* Sol taraf boş bırakıldı */}
@@ -301,10 +271,10 @@ const Profile = () => {
             style={styles.headerButton}
             onPress={() => navigation.navigate('Settings')}
           >
-            <Text style={styles.headerButtonIcon}>⚙️</Text>
+            <Image source={require('../assets/images/icons/ayar.png')} style={styles.headerButtonIcon} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.headerButton}>
-            <Text style={styles.headerButtonIcon}>☰</Text>
+            <Image source={require('../assets/images/icons/menu.png')} style={styles.headerButtonIcon} />
           </TouchableOpacity>
         </View>
       </View>
@@ -320,312 +290,332 @@ const Profile = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
   },
+  
+  // Arka Plan
+  backgroundContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+
   header: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
     paddingTop: 50,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    zIndex: 10,
   },
+  
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
   },
+  
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
   },
+  
   headerButton: {
     width: 40,
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: theme.spacing.sm,
+    marginLeft: 15,
   },
+  
   headerButtonIcon: {
-    fontSize: 20,
-    color: theme.colors.text,
+    width: 24,
+    height: 24,
+    resizeMode: 'contain',
+    tintColor: '#FFFFFF', // Beyaz renk
   },
+  
   headerTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: theme.colors.text,
+    color: '#FFFFFF',
     textAlign: 'center',
     flex: 1,
   },
+  
   content: {
     flex: 1,
-    padding: theme.spacing.lg,
+    padding: 20,
+    paddingTop: 20,
   },
+  
   profileHeader: {
     alignItems: 'center',
-    marginBottom: theme.spacing.xl,
+    marginBottom: 30,
   },
+  
   profileImageContainer: {
     position: 'relative',
-    marginBottom: theme.spacing.lg,
+    marginBottom: 20,
   },
+  
   profileImage: {
     width: 120,
     height: 120,
     borderRadius: 60,
     borderWidth: 4,
-    borderColor: theme.colors.primary,
+    borderColor: '#130139',
   },
+  
   editImageButton: {
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: '#130139',
     width: 36,
     height: 36,
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: theme.colors.background,
+    borderColor: '#FFFFFF',
   },
+  
   editImageIcon: {
-    fontSize: 16,
+    width: 16,
+    height: 16,
+    resizeMode: 'contain',
   },
+  
   profileName: {
     fontSize: 24,
     fontWeight: '700',
-    color: theme.colors.text,
-    marginBottom: theme.spacing.xs,
+    color: '#FFFFFF',
+    marginBottom: 8,
   },
+  
   profileOffice: {
     fontSize: 16,
-    color: theme.colors.textSecondary,
-    marginBottom: theme.spacing.lg,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 20,
   },
+  
   profileStats: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     width: '100%',
-    backgroundColor: theme.colors.cardBg,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    padding: 20,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.1,
+    shadowRadius: 15,
+    elevation: 8,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
+  
   statItem: {
     alignItems: 'center',
   },
+  
   statNumber: {
     fontSize: 20,
     fontWeight: '700',
-    color: theme.colors.primary,
+    color: '#130139',
   },
+  
   statLabel: {
     fontSize: 12,
-    color: theme.colors.textSecondary,
+    color: '#6B7280',
     marginTop: 4,
   },
+  
   section: {
-    marginBottom: theme.spacing.xl,
+    marginBottom: 30,
   },
+  
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: theme.colors.text,
-    marginBottom: theme.spacing.md,
+    color: '#FFFFFF',
+    marginBottom: 15,
   },
-  contactCard: {
-    backgroundColor: theme.colors.cardBg,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  contactItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: theme.spacing.md,
-  },
-
+  
   portfoliosHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: theme.spacing.md,
+    marginBottom: 15,
   },
+  
   addPortfolioButton: {
-    backgroundColor: theme.colors.primary,
+    backgroundColor: '#130139',
     width: 40,
     height: 40,
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
   },
+  
   addPortfolioIcon: {
     fontSize: 24,
-    color: theme.colors.white,
+    color: '#FFFFFF',
     fontWeight: '700',
   },
+  
   portfolioCardContainer: {
-    width: (width - theme.spacing.lg * 3) / 2,
-    marginBottom: theme.spacing.md,
+    width: (width - 60) / 2,
+    marginBottom: 15,
   },
+  
+
+  
   portfolioCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: theme.spacing.sm,
+    marginBottom: 10,
   },
-  portfolioCardActions: {
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
-  },
-  statusBadge: {
+  
+
+  
+
+  
+  actionButton: {
+    padding: 8,
+    borderRadius: 8,
+    borderWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: 4,
-    borderRadius: theme.borderRadius.sm,
+    minWidth: 80,
+    paddingHorizontal: 12,
+    transition: 'all 0.3s ease',
   },
-  statusPublished: {
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+  
+  actionButtonVisible: {
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
   },
-  statusHidden: {
-    backgroundColor: 'rgba(156, 163, 175, 0.2)',
+  
+  actionButtonHidden: {
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    minWidth: 60,
+    paddingHorizontal: 8,
   },
-  statusIcon: {
-    fontSize: 16,
-    marginRight: 4,
-  },
-  statusText: {
+  
+
+  
+
+  
+  actionButtonText: {
     fontSize: 12,
     fontWeight: '600',
+    color: '#FFFFFF',
+    transition: 'all 0.3s ease',
   },
-  actionButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+  
+  actionButtonTextVisible: {
+    opacity: 1,
+    transform: [{ scale: 1 }],
+  },
+  
+  actionButtonTextHidden: {
+    opacity: 0.9,
+    transform: [{ scale: 0.95 }],
+  },
+  
+  statusDot: {
+    width: 8,
+    height: 8,
     borderRadius: 4,
-    backgroundColor: 'rgba(255, 0, 0, 0.1)',
+    marginRight: 8,
   },
-  actionButtonText: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: theme.colors.primary,
+  
+  statusDotPublished: {
+    backgroundColor: '#10b981',
   },
-  deleteButton: {
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+  
+  statusDotHidden: {
+    backgroundColor: '#ef4444',
   },
-  deleteButtonText: {
-    color: '#ef4444',
-  },
+  
+
+  
   emptyPortfolios: {
     alignItems: 'center',
-    paddingVertical: theme.spacing.xl * 2,
+    paddingVertical: 60,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    padding: 30,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.1,
+    shadowRadius: 15,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
+  
   emptyIcon: {
     fontSize: 64,
-    marginBottom: theme.spacing.lg,
+    marginBottom: 20,
   },
+  
   emptyTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: theme.colors.text,
-    marginBottom: theme.spacing.sm,
+    color: '#130139',
+    marginBottom: 10,
   },
+  
   emptyDescription: {
     fontSize: 16,
-    color: theme.colors.textSecondary,
+    color: '#6B7280',
     textAlign: 'center',
-    marginBottom: theme.spacing.lg,
+    marginBottom: 20,
   },
+  
   addFirstPortfolioButton: {
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
+    backgroundColor: '#130139',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 10,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
   },
+  
   addFirstPortfolioText: {
-    color: theme.colors.white,
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
+  
+  portfoliosSubtitle: {
+    color: theme.colors.textSecondary,
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 8,
+    opacity: 0.8,
+  },
+  
   portfolioRow: {
     justifyContent: 'space-between',
-  },
-  menuCard: {
-    backgroundColor: theme.colors.cardBg,
-    borderRadius: theme.borderRadius.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  menuItem: {
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  menuItemContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: theme.spacing.lg,
-  },
-  menuItemIcon: {
-    fontSize: 24,
-    marginRight: theme.spacing.md,
-  },
-  menuItemText: {
-    flex: 1,
-  },
-  menuItemTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.text,
-    marginBottom: 2,
-  },
-  menuItemSubtitle: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
-  },
-  menuItemArrow: {
-    fontSize: 18,
-    color: theme.colors.textSecondary,
-  },
-  accountCard: {
-    backgroundColor: theme.colors.cardBg,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  accountItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: theme.spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  accountLabel: {
-    fontSize: 16,
-    color: theme.colors.textSecondary,
-  },
-  accountValue: {
-    fontSize: 16,
-    color: theme.colors.text,
-    fontWeight: '600',
-  },
-  accountStatus: {
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: 2,
-    borderRadius: theme.borderRadius.sm,
-  },
-  statusActive: {
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
-    color: '#10b981',
-  },
-  statusInactive: {
-    backgroundColor: 'rgba(239, 68, 68, 0.2)',
-    color: '#ef4444',
   },
 });
 

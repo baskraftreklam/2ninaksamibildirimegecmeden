@@ -44,17 +44,16 @@ const ListingCard = ({
     return `₺${price.toLocaleString()}`;
   };
 
-  const getStatusColor = () => {
-    return isPublished ? theme.colors.success : theme.colors.warning;
-  };
 
-  const getStatusText = () => {
-    return isPublished ? 'Yayında' : 'Taslak';
-  };
+
+
 
   return (
     <TouchableOpacity 
-      style={styles.container} 
+      style={[
+        styles.container,
+        !isPublished && styles.containerHidden
+      ]} 
       onPress={onPress}
       activeOpacity={0.8}
     >
@@ -71,10 +70,7 @@ const ListingCard = ({
           </View>
         )}
         
-        <View style={styles.statusBadge}>
-          <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />
-          <Text style={styles.statusText}>{getStatusText()}</Text>
-        </View>
+
 
         {isEditable && (
           <View style={styles.actionButtons}>
@@ -169,6 +165,13 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  
+  containerHidden: {
+    borderWidth: 2,
+    borderColor: 'rgba(255, 0, 0, 0.4)',
+  },
+  
+
   imageContainer: {
     position: 'relative',
     height: 180,
@@ -210,6 +213,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
+  
+
   actionButtons: {
     position: 'absolute',
     top: theme.spacing.sm,

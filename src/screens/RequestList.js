@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,14 +10,19 @@ import {
   Animated,
   Modal,
   FlatList,
+  Image,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '../context/AuthContext';
 import { theme } from '../theme/theme';
+import { fetchUserRequests, toggleRequestPublishStatus } from '../services/firestore';
 
 const { width, height } = Dimensions.get('window');
 
 const RequestList = () => {
   const navigation = useNavigation();
+  const { user } = useAuth();
   const [fadeAnim] = useState(new Animated.Value(0));
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
@@ -27,58 +32,29 @@ const RequestList = () => {
   const [showMatchingPortfolios, setShowMatchingPortfolios] = useState(false);
   const [hiddenRequests, setHiddenRequests] = useState([]);
   const [showHidden, setShowHidden] = useState(false);
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data
-  const [requests, setRequests] = useState([
-    {
-      id: '1',
-      clientName: 'Ahmet Yılmaz',
-      clientPhone: '0555 123 45 67',
-      officeName: 'Samsun Emlak Ofisi',
-      propertyType: 'Satılık',
-      maxBudget: 2500000,
-      minSqMeters: 80,
-      maxSqMeters: 120,
-      roomCount: '2+1',
-      locations: ['Atakent', 'Güzelyalı', 'Cumhuriyet'],
-      status: 'Yeni',
-      createdAt: Date.now() - 2 * 24 * 60 * 60 * 1000, // 2 gün önce
-      notes: 'Merkezi konumda, asansörlü bina tercih edilir.',
-      matchingPortfolios: 3,
-    },
-    {
-      id: '2',
-      clientName: 'Fatma Demir',
-      clientPhone: '0555 987 65 43',
-      officeName: 'Deniz Emlak',
-      propertyType: 'Kiralık',
-      maxBudget: 15000,
-      minSqMeters: 60,
-      maxSqMeters: 90,
-      roomCount: '1+1',
-      locations: ['Denizevleri', 'Çamlıyazı'],
-      status: 'İşlemde',
-      createdAt: Date.now() - 5 * 24 * 60 * 60 * 1000, // 5 gün önce
-      notes: 'Deniz manzaralı, güvenli site tercih edilir.',
-      matchingPortfolios: 1,
-    },
-    {
-      id: '3',
-      clientName: 'Mehmet Kaya',
-      clientPhone: '0555 456 78 90',
-      officeName: 'Kolpınar Emlak',
-      propertyType: 'Satılık',
-      maxBudget: 5000000,
-      minSqMeters: 120,
-      maxSqMeters: 180,
-      roomCount: '3+1',
-      locations: ['Büyükkolpınar', 'Küçükkolpınar'],
-      status: 'Sonuçlandı',
-      createdAt: Date.now() - 10 * 24 * 60 * 60 * 1000, // 10 gün önce
-      notes: 'Bahçeli müstakil ev tercih edilir.',
-      matchingPortfolios: 0,
-    },
-  ]);
+  // Load user requests on component mount
+  useEffect(() => {
+    if (user) {
+      loadUserRequests();
+    }
+  }, [user, loadUserRequests]);
+
+  const loadUserRequests = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await fetchUserRequests(user.uid);
+      setRequests(data);
+      console.log('[RequestList] user requests loaded:', data.length);
+    } catch (error) {
+      console.error('Error loading user requests:', error);
+      Alert.alert('Hata', 'Talepler yüklenirken bir hata oluştu.');
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -217,23 +193,23 @@ const RequestList = () => {
           </View>
 
           <View style={styles.requestActions}>
-            <TouchableOpacity
-              style={styles.favoriteButton}
-              onPress={() => toggleFavorite(request.id)}
-            >
-              <Text style={styles.favoriteIcon}>
-                {isFavorite(request.id) ? '❤️' : '🤍'}
-              </Text>
-            </TouchableOpacity>
+                         <TouchableOpacity
+               style={styles.favoriteButton}
+               onPress={() => toggleFavorite(request.id)}
+             >
+               <Text style={styles.favoriteIcon}>
+                 {isFavorite(request.id) ? '❤️' : '🤍'}
+               </Text>
+             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.hideButton}
-              onPress={() => toggleHidden(request.id)}
-            >
-              <Text style={styles.hideIcon}>
-                {isHidden(request.id) ? '👁️' : '🙈'}
-              </Text>
-            </TouchableOpacity>
+             <TouchableOpacity
+               style={styles.hideButton}
+               onPress={() => toggleHidden(request.id)}
+             >
+               <Text style={styles.hideIcon}>
+                 {isHidden(request.id) ? '👁️' : '👁️'}
+               </Text>
+             </TouchableOpacity>
 
                          <View style={styles.statusBadge}>
                <Text style={styles.propertyType}>{request.propertyType}</Text>
@@ -286,7 +262,12 @@ const RequestList = () => {
           )}
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>📍 Lokasyon:</Text>
-            <Text style={styles.detailValue}>{request.locations.join(', ')}</Text>
+            <Text style={styles.detailValue}>
+              {request.locations && request.locations.length > 0 
+                ? request.locations.join(', ') 
+                : request.neighborhood || 'Belirtilmemiş'
+              }
+            </Text>
           </View>
           
           {request.matchingPortfolios > 0 && (
@@ -309,47 +290,58 @@ const RequestList = () => {
 
   const renderHeader = () => (
     <View style={styles.header}>
-      <View style={styles.headerContent}>
-        <View style={styles.headerTop}>
-          <Text style={styles.mainTitle}>
-            {showFavorites ? 'Favori Talepler' : showHidden ? 'Gizlenmiş Talepler' : 'Talep Havuzu'}
-          </Text>
-          
-          <View style={styles.headerButtons}>
-            <TouchableOpacity
-              style={[styles.headerButton, showFavorites && styles.headerButtonActive]}
-              onPress={() => {
-                setShowFavorites(!showFavorites);
-                setShowHidden(false);
-              }}
-            >
-              <Text style={styles.headerButtonIcon}>
-                {showFavorites ? '📋' : '❤️'}
-              </Text>
-            </TouchableOpacity>
+      {/* Sol: Geri Butonu */}
+      <TouchableOpacity
+        style={styles.headerButtonBack}
+        onPress={() => navigation.goBack()}
+      >
+        <Image 
+          source={require('../assets/images/icons/return.png')} 
+          style={styles.headerButtonIconBack}
+        />
+      </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.headerButton, showHidden && styles.headerButtonActive]}
-              onPress={() => {
-                setShowHidden(!showHidden);
-                setShowFavorites(false);
-              }}
-            >
-              <Text style={styles.headerButtonIcon}>
-                {showHidden ? '📋' : '🙈'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+      {/* Orta: Başlık ve Alt Başlık */}
+      <View style={styles.headerContent}>
+        <Text style={styles.mainTitle}>
+          {showFavorites ? 'Favori Talepler' : showHidden ? 'Gizlenmiş Talepler' : 'Taleplerim'}
+        </Text>
         
         <Text style={styles.mainSubtitle}>
           {showFavorites 
             ? `${favorites.length} favori talep` 
             : showHidden
             ? `${hiddenRequests.length} gizlenmiş talep`
-            : `${requests.filter(r => !hiddenRequests.includes(r.id)).length} aktif talep`
+            : 'Bireysel Talepleriniz'
           }
         </Text>
+      </View>
+
+      {/* Sağ: Favori ve Gizleme Butonları */}
+      <View style={styles.headerButtons}>
+        <TouchableOpacity
+          style={[styles.headerButton, showFavorites && styles.headerButtonActive]}
+          onPress={() => {
+            setShowFavorites(!showFavorites);
+            setShowHidden(false);
+          }}
+        >
+          <Text style={styles.headerButtonIcon}>
+            {showFavorites ? '📋' : '❤️'}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.headerButton, showHidden && styles.headerButtonActive]}
+          onPress={() => {
+            setShowHidden(!showHidden);
+            setShowFavorites(false);
+          }}
+        >
+          <Text style={styles.headerButtonIcon}>
+            {showHidden ? '📋' : '🙈'}
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -380,15 +372,27 @@ const RequestList = () => {
 
   return (
     <View style={styles.container}>
-             <FlatList
-         data={filteredRequests}
-         renderItem={renderRequestCard}
-         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-        ListHeaderComponent={renderHeader}
-        ListEmptyComponent={renderEmptyComponent}
-      />
+      {/* Arka Plan - Resim + %70 opak koyu mor */}
+      <View style={styles.backgroundContainer}>
+        <Image source={require('../assets/images/dark-bg.jpg')} style={styles.backgroundImage} />
+      </View>
+
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={styles.loadingText}>Talepler yükleniyor...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={filteredRequests}
+          renderItem={renderRequestCard}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+          ListHeaderComponent={renderHeader}
+          ListEmptyComponent={renderEmptyComponent}
+        />
+      )}
 
       {/* Eşleşen Portföyler Modal */}
       <Modal
@@ -490,24 +494,74 @@ const RequestList = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  
+  // Arka Plan - Resim + %70 opak koyu mor katman
+  backgroundContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(19, 1, 57, 0.7)', // %70 opak koyu mor katman
+  },
+  
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: theme.colors.background,
   },
+  loadingText: {
+    marginTop: 10,
+    color: theme.colors.textSecondary,
+    fontSize: 16,
+  },
+
+  
+
   listContainer: {
     padding: 16,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 24,
+    paddingHorizontal: 20,
+  },
+  headerButtonBack: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  headerButtonIconBack: {
+    width: 20,
+    height: 20,
+    resizeMode: 'contain',
+    tintColor: '#130139',
   },
   headerContent: {
+    flex: 1,
     alignItems: 'center',
     marginBottom: 24,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    marginBottom: 8,
+    marginHorizontal: 20,
   },
   mainTitle: {
     fontSize: 32,
@@ -517,12 +571,15 @@ const styles = StyleSheet.create({
   },
   mainSubtitle: {
     fontSize: 16,
-    color: '#ff0000',
+    color: '#FFFFFF',
     opacity: 0.8,
+    textAlign: 'center',
+    marginTop: 4,
   },
   headerButtons: {
     flexDirection: 'row',
     gap: 8,
+    alignItems: 'center',
   },
   headerButton: {
     backgroundColor: 'rgba(255, 0, 0, 0.1)',
@@ -541,16 +598,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   requestCard: {
-    backgroundColor: theme.colors.cardBg,
-    borderRadius: theme.borderRadius.lg,
+    backgroundColor: '#FFFFFF', // Anasayfadaki beyaz kart rengi
+    borderRadius: Math.min(width * 0.05, 15), // Anasayfadaki border radius
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    shadowColor: theme.colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    borderWidth: 2,
+    borderColor: 'rgba(19, 1, 57, 0.3)', // Daha belirgin koyu mor border
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 12,
   },
   requestHeader: {
     flexDirection: 'row',
@@ -567,7 +624,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 0, 0, 0.1)',
+    backgroundColor: 'rgba(19, 1, 57, 0.1)', // Koyu mor şeffaf
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -581,18 +638,18 @@ const styles = StyleSheet.create({
   agentName: {
     fontSize: 16,
     fontWeight: '600',
-    color: theme.colors.text,
+    color: '#130139', // Koyu mor metin rengi
     marginBottom: 2,
   },
   agentOffice: {
     fontSize: 11,
-    color: theme.colors.textSecondary,
+    color: '#374151', // Gri metin rengi
     fontWeight: '400',
     marginBottom: 2,
   },
   agentTime: {
     fontSize: 11,
-    color: '#ff0000',
+    color: '#ff0000', // Kırmızı kalacak (gün sayısı için)
     fontWeight: '500',
   },
   requestActions: {
@@ -605,6 +662,7 @@ const styles = StyleSheet.create({
   },
   favoriteIcon: {
     fontSize: 16,
+    color: '#FFFFFF',
   },
   hideButton: {
     padding: 4,
@@ -613,7 +671,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   statusBadge: {
-    backgroundColor: 'rgba(255, 0, 0, 0.1)',
+    backgroundColor: 'rgba(19, 1, 57, 0.1)', // Koyu mor şeffaf
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
@@ -621,7 +679,7 @@ const styles = StyleSheet.create({
   propertyType: {
     fontSize: 10,
     fontWeight: '600',
-    color: '#ff0000',
+    color: '#130139', // Koyu mor metin rengi
   },
 
   statusButton: {
@@ -650,8 +708,8 @@ const styles = StyleSheet.create({
   requestDetails: {
     padding: 16,
     paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
+    borderTopWidth: 2,
+    borderTopColor: 'rgba(19, 1, 57, 0.2)', // Koyu mor şeffaf border
   },
   detailRow: {
     flexDirection: 'row',
@@ -661,18 +719,18 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 12,
-    color: theme.colors.textSecondary,
+    color: '#374151', // Gri metin rengi
     flex: 1,
   },
   detailValue: {
     fontSize: 12,
-    color: theme.colors.text,
+    color: '#130139', // Koyu mor metin rengi
     fontWeight: '500',
     flex: 2,
     textAlign: 'right',
   },
   matchingButton: {
-    backgroundColor: '#ff0000',
+    backgroundColor: '#130139', // Koyu tema rengi
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 8,
@@ -689,19 +747,30 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingTop: 40,
     gap: 8,
+    backgroundColor: 'rgba(19, 1, 57, 0.95)', // Anasayfadaki koyu mor container
+    borderRadius: 15,
+    padding: 30,
+    marginHorizontal: 20,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.4,
+    shadowRadius: 25,
+    elevation: 20,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
   },
   emptyIcon: {
     fontSize: 64,
     marginBottom: 16,
   },
   emptyText: {
-    color: theme.colors.text,
+    color: '#FFFFFF', // Beyaz metin
     fontSize: 18,
     fontWeight: '600',
     textAlign: 'center',
   },
   emptySubtext: {
-    color: theme.colors.textSecondary,
+    color: 'rgba(255, 255, 255, 0.8)', // Şeffaf beyaz
     fontSize: 14,
     textAlign: 'center',
     paddingHorizontal: 32,
@@ -758,7 +827,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   viewPortfolioButton: {
-    backgroundColor: '#ff0000',
+    backgroundColor: '#130139', // Koyu tema rengi
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 6,
@@ -784,6 +853,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     lineHeight: 24,
   },
+
 });
 
 export default RequestList;

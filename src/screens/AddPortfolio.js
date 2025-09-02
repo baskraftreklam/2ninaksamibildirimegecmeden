@@ -10,15 +10,19 @@ import {
   Alert,
   Image,
   Modal,
+  Switch,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '../context/AuthContext';
 import { theme } from '../theme/theme';
+import { addPortfolio } from '../services/firestore';
 import MapPicker from '../components/MapPicker';
 
 const { width } = Dimensions.get('window');
 
 const AddPortfolio = () => {
   const navigation = useNavigation();
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
     city: 'Samsun',
@@ -39,6 +43,7 @@ const AddPortfolio = () => {
     heatingType: 'Doğalgaz',
     images: [],
     location: { latitude: 41.33, longitude: 36.25 }, // Samsun koordinatları
+    isPublished: true, // Varsayılan olarak yayınla
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -64,26 +69,41 @@ const AddPortfolio = () => {
       return;
     }
 
+    if (!user) {
+      Alert.alert('Hata', 'Kullanıcı girişi yapılmamış.');
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
-      // Burada Firebase'e kaydetme işlemi yapılacak
-      console.log('Portföy kaydediliyor:', formData);
+      // Portföy verilerini hazırla
+      const portfolioData = {
+        ...formData,
+        price: parseInt(formData.price),
+        squareMeters: parseInt(formData.squareMeters),
+        buildingAge: formData.buildingAge ? parseInt(formData.buildingAge) : 0,
+        floor: formData.floor ? parseInt(formData.floor) : 0,
+        totalFloors: formData.totalFloors ? parseInt(formData.totalFloors) : 0,
+      };
+
+      // Servise gönder
+      const result = await addPortfolio(portfolioData, user.uid);
       
-      // Simüle edilmiş kaydetme
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      Alert.alert(
-        'Başarılı!',
-        'Portföy başarıyla kaydedildi.',
-        [
-          {
-            text: 'Tamam',
-            onPress: () => navigation.goBack()
-          }
-        ]
-      );
+      if (result.success) {
+        Alert.alert(
+          'Başarılı!',
+          `Portföy başarıyla kaydedildi ve ${formData.isPublished ? 'yayınlandı' : 'gizlendi'}.`,
+          [
+            {
+              text: 'Tamam',
+              onPress: () => navigation.goBack()
+            }
+          ]
+        );
+      }
     } catch (error) {
+      console.error('Error adding portfolio:', error);
       Alert.alert('Hata', 'Portföy kaydedilirken bir hata oluştu.');
     } finally {
       setIsSubmitting(false);
@@ -254,6 +274,27 @@ const AddPortfolio = () => {
           
           {renderInput('Açıklama', 'description', 'Detaylı açıklama girin', 'default')}
           {renderInput('Özellikler', 'features', 'Özellikler (virgülle ayırın)', 'default')}
+        </View>
+
+        {/* Yayınla/Gizle Switch */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Yayın Ayarları</Text>
+          
+          <View style={styles.switchContainer}>
+            <Text style={styles.switchLabel}>Portföyü Yayınla</Text>
+            <Switch
+              value={formData.isPublished}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, isPublished: value }))}
+              trackColor={{ false: '#767577', true: theme.colors.primary }}
+              thumbColor={formData.isPublished ? '#ffffff' : '#f4f3f4'}
+            />
+          </View>
+          <Text style={styles.switchDescription}>
+            {formData.isPublished 
+              ? 'Portföy portföy havuzunda görünecek' 
+              : 'Portföy sadece sizin portföylerinizde görünecek'
+            }
+          </Text>
         </View>
 
         <View style={styles.submitContainer}>
@@ -478,6 +519,29 @@ const styles = StyleSheet.create({
     padding: theme.spacing.sm,
     marginTop: theme.spacing.sm,
   },
+
+  switchContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
+  },
+
+  switchLabel: {
+    fontSize: 16,
+    color: theme.colors.text,
+    fontWeight: '500',
+  },
+
+  switchDescription: {
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: theme.spacing.md,
+    fontStyle: 'italic',
+  },
+
   coordinatesText: {
     color: theme.colors.text,
     fontSize: 12,

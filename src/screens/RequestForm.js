@@ -13,12 +13,15 @@ import {
   Switch,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '../context/AuthContext';
 import { theme } from '../theme/theme';
+import { addRequest } from '../services/firestore';
 
 const { width, height } = Dimensions.get('window');
 
 const RequestForm = () => {
   const navigation = useNavigation();
+  const { user } = useAuth();
   const [fadeAnim] = useState(new Animated.Value(0));
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [visibleNeighborhoods, setVisibleNeighborhoods] = useState(2);
@@ -44,7 +47,7 @@ const RequestForm = () => {
     neighborhood4: '',
     buildingAge: [0, 40],
     floor: [0, 20],
-    publishToPool: true,
+    publishToPool: true, // Varsayılan olarak talep havuzuna yayınla
   });
 
   useEffect(() => {
@@ -107,32 +110,38 @@ const RequestForm = () => {
     if (!validateForm()) return;
 
     try {
-      // Simüle edilmiş form gönderimi
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      if (!user) {
+        Alert.alert('Hata', 'Kullanıcı girişi yapılmamış.');
+        return;
+      }
 
-      const submissionData = {
-        clientName: formData.name,
-        clientPhone: formData.phone,
-        propertyType: formData.listingStatus,
-        roomCount: formData.roomCount,
-        maxBudget: formData.budget[1],
-        minSqMeters: formData.squareMeters[0],
-        maxSqMeters: formData.squareMeters[1],
-        locations: [formData.neighborhood1, formData.neighborhood2, formData.neighborhood3, formData.neighborhood4].filter(Boolean),
-        notes: '',
+      const requestData = {
+        title: `${formData.listingStatus} ${formData.roomCount || 'Daire'} Arıyorum`,
+        description: `${formData.roomCount || 'Daire'} arıyorum`,
+        city: 'Samsun',
+        district: 'Atakum',
+        neighborhood: formData.neighborhood1 || 'Belirtilmemiş',
+        propertyType: 'Daire',
+        roomCount: formData.roomCount || 'Belirtilmemiş',
+        minPrice: formData.budget[0],
+        maxPrice: formData.budget[1],
+        minSquareMeters: formData.squareMeters[0],
+        maxSquareMeters: formData.squareMeters[1],
+        status: 'active',
         publishToPool: formData.publishToPool,
-        createdAt: Date.now(),
-        status: 'Yeni',
-        agentId: 'mock-user-id',
-        agentName: 'Danışman',
-        agentPicture: null,
-        agentPhone: null,
-        agentOfficeName: null,
+        contactInfo: {
+          name: formData.name,
+          phone: formData.phone,
+          email: 'user@example.com'
+        }
       };
 
-      console.log('Form data submitted:', submissionData);
+      const result = await addRequest(requestData, user.uid);
 
-      setShowSuccessModal(true);
+      if (result.success) {
+        console.log('Request submitted successfully:', result.request);
+        setShowSuccessModal(true);
+      }
       
       setTimeout(() => {
         setShowSuccessModal(false);
@@ -140,7 +149,8 @@ const RequestForm = () => {
       }, 2500);
 
     } catch (error) {
-      Alert.alert('Hata', 'Form gönderilirken bir hata oluştu. Lütfen tekrar deneyin.');
+      console.error('Form submission error:', error);
+      Alert.alert('Hata', 'Talep gönderilirken bir hata oluştu. Lütfen tekrar deneyin.');
     }
   };
 

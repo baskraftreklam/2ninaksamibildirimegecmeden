@@ -28,30 +28,30 @@ const Home = () => {
   const headerSlideAnim = useRef(new Animated.Value(-20)).current;
 
   useEffect(() => {
-    // Business kalitesinde animasyon sequence - Sadece JavaScript thread'de
+    // Business kalitesinde animasyon sequence
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 800,
-        useNativeDriver: false,
+        useNativeDriver: true,
       }),
       Animated.spring(slideUpAnim, {
         toValue: 0,
         tension: 100,
         friction: 8,
-        useNativeDriver: false,
+        useNativeDriver: true,
       }),
       Animated.spring(scaleAnim, {
         toValue: 1,
         tension: 80,
         friction: 6,
-        useNativeDriver: false,
+        useNativeDriver: true,
       }),
       Animated.spring(headerSlideAnim, {
         toValue: 0,
         tension: 90,
         friction: 7,
-        useNativeDriver: false,
+        useNativeDriver: true,
       }),
     ]).start();
   }, [fadeAnim, slideUpAnim, scaleAnim, headerSlideAnim]);
@@ -177,21 +177,7 @@ const Home = () => {
           <View style={styles.navigationButtonsContainer}>
             <TouchableOpacity 
               style={styles.navigationButton}
-              onPress={() => navigation.navigate('PortfolioList')}
-              activeOpacity={0.8}
-            >
-              <View style={styles.buttonIconContainer}>
-                <Image 
-                  source={require('../assets/images/porfoyhavuz.png')} 
-                  style={styles.buttonIcon}
-                />
-              </View>
-              <Text style={styles.buttonTitle}>Portföy Havuzu</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.navigationButton}
-              onPress={() => navigation.navigate('DemandPool')}
+              onPress={() => navigation.navigate('Talep Havuzu')}
               activeOpacity={0.8}
             >
               <View style={styles.buttonIconContainer}>
@@ -201,6 +187,20 @@ const Home = () => {
                 />
               </View>
               <Text style={styles.buttonTitle}>Talep Havuzu</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.navigationButton}
+              onPress={() => navigation.navigate('Portföy Havuzu')}
+              activeOpacity={0.8}
+            >
+              <View style={styles.buttonIconContainer}>
+                <Image 
+                  source={require('../assets/images/porfoyhavuz.png')} 
+                  style={styles.buttonIcon}
+                />
+              </View>
+              <Text style={styles.buttonTitle}>Portföy Havuzu</Text>
             </TouchableOpacity>
           </View>
         </Animated.View>
@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     padding: 20,
     marginTop: 5,
-    marginBottom: 0, // Tamamen kaldırdım - butonları aşağıya indirmek için
+    marginBottom: 16,
     marginHorizontal: 0,
     minHeight: 120,
     shadowColor: '#000000',
@@ -456,21 +456,18 @@ const styles = StyleSheet.create({
   // Navigasyon Butonları
   navigationButtonsContainer: {
     flexDirection: 'row',
-    justifyContent: 'center', // Ortala
-    marginTop: 40, // Daha büyük margin ile butonları aşağıya indir
-    marginBottom: 15, // Alt margin'i azalttım (navigasyon barının daha yakınında)
+    justifyContent: 'space-between',
+    marginTop: 8,
+    marginBottom: 20,
     paddingHorizontal: 20,
-    gap: 15, // Butonlar arası boşluk
   },
 
   navigationButton: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 8, // Radius'u azalttım
-    padding: 12, // Daha ince yapmak için
-    width: (width - 70) / 2, // Genişliği azalt
-    flexDirection: 'row', // Yatay düzen için
+    borderRadius: 16,
+    padding: 16,
+    width: (width - 60) / 2,
     alignItems: 'center',
-    justifyContent: 'flex-start', // Sola hizala
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
@@ -481,30 +478,28 @@ const styles = StyleSheet.create({
   },
 
   buttonIconContainer: {
-    width: 28, // Daha küçük ikon container
-    height: 28,
-    borderRadius: 14,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: 'rgba(19, 1, 57, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10, // Sağa margin ekle
-    marginBottom: 0, // Alt margin'i kaldır
+    marginBottom: 12,
   },
 
   buttonIcon: {
-    width: 16, // Daha küçük ikon
-    height: 16,
+    width: 20,
+    height: 20,
     resizeMode: 'contain',
     tintColor: '#130139',
   },
 
   buttonTitle: {
-    fontSize: 13, // Daha küçük font
+    fontSize: 16,
     fontWeight: '700',
     color: '#130139',
-    textAlign: 'left', // Sola hizala
-    marginBottom: 0, // Alt margin'i kaldır
-    flex: 1, // Kalan alanı kapla
+    textAlign: 'center',
+    marginBottom: 6,
   },
 
   buttonSubtitle: {

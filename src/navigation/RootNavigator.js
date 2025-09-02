@@ -12,15 +12,12 @@ const Stack = createNativeStackNavigator();
 export default function RootNavigator() {
   return (
     <Stack.Navigator
-      initialRouteName="SplashScreens" // Splash screen'den başla
+      initialRouteName="MainTabs" // Direkt ana sayfaya git
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: 'transparent' },
       }}
     >
-      <Stack.Screen name="SplashScreens" component={SplashScreens} />
-      <Stack.Screen name="Login" component={Login} />
-      <Stack.Screen name="Onboarding" component={Onboarding} />
       <Stack.Screen name="MainTabs" component={MainTabs} />
       <Stack.Screen name="Settings" component={Settings} />
 

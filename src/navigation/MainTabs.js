@@ -1,5 +1,5 @@
 // src/navigation/MainTabs.js
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Animated, Modal, Dimensions } from 'react-native';
@@ -13,33 +13,42 @@ import RequestForm from '../screens/RequestForm';
 import RequestList from '../screens/RequestList';
 import Profile from '../screens/Profile';
 import PropertyDetail from '../screens/PropertyDetail';
+import MyPortfolios from '../screens/MyPortfolios';
+import DemandPool from '../screens/DemandPool';
+
+
 
 const { width, height } = Dimensions.get('window');
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-// Portfolio Stack
-const PortfolioStack = () => (
-  <Stack.Navigator screenOptions={{ headerShown: false }}>
-    <Stack.Screen name="PortfolioList" component={PortfolioList} />
-    <Stack.Screen name="AddPortfolio" component={AddPortfolio} />
-    <Stack.Screen name="PropertyDetail" component={PropertyDetail} />
-  </Stack.Navigator>
-);
+
+
+
+
+
+
 
 // Request Stack
 const RequestStack = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen name="RequestList" component={RequestList} />
     <Stack.Screen name="RequestForm" component={RequestForm} />
+    <Stack.Screen name="AddPortfolio" component={AddPortfolio} />
   </Stack.Navigator>
 );
 
 // Home Stack
 const HomeStack = () => (
-  <Stack.Navigator screenOptions={{ headerShown: false }}>
+  <Stack.Navigator 
+    initialRouteName="HomeScreen"
+    screenOptions={{ headerShown: false }}
+  >
     <Stack.Screen name="HomeScreen" component={Home} />
     <Stack.Screen name="PropertyDetail" component={PropertyDetail} />
+    <Stack.Screen name="PortfolioList" component={PortfolioList} />
+    <Stack.Screen name="DemandPool" component={DemandPool} />
+    <Stack.Screen name="AddPortfolio" component={AddPortfolio} />
   </Stack.Navigator>
 );
 
@@ -49,8 +58,16 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
   const slideAnimation = useRef(new Animated.Value(0)).current;
   const fadeAnimation = useRef(new Animated.Value(0)).current;
   const buttonScaleAnimation = useRef(new Animated.Value(0.8)).current;
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   const showModal = () => {
+    if (!isMounted.current) return;
     setIsModalVisible(true);
     
     // Slide up animation
@@ -72,10 +89,16 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
         tension: 80,
         friction: 6,
       }),
-    ]).start();
+    ]).start(() => {
+      if (isMounted.current) {
+        // Animation completed safely
+      }
+    });
   };
 
   const hideModal = () => {
+    if (!isMounted.current) return;
+    
     // Slide down animation
     Animated.parallel([
       Animated.spring(slideAnimation, {
@@ -95,18 +118,22 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
         useNativeDriver: true,
       }),
     ]).start(() => {
-      setIsModalVisible(false);
+      if (isMounted.current) {
+        setIsModalVisible(false);
+      }
     });
   };
 
   const handlePortfolioAdd = () => {
+    if (!isMounted.current) return;
     hideModal();
-    navigation.navigate('Portföy Havuzu', { screen: 'AddPortfolio' });
+    navigation.navigate('Ana Sayfa', { screen: 'AddPortfolio' });
   };
 
   const handleRequestAdd = () => {
+    if (!isMounted.current) return;
     hideModal();
-    navigation.navigate('Talep Havuzu', { screen: 'RequestForm' });
+    navigation.navigate('Taleplerim', { screen: 'RequestForm' });
   };
 
   return (
@@ -116,6 +143,8 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
         const isFocused = state.index === index;
         
         const onPress = () => {
+          if (!isMounted.current) return;
+          
           if (route.name === 'Ekleme') {
             showModal();
             return;
@@ -128,7 +157,15 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
           });
 
           if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate(route.name);
+            if (route.name === 'Ana Sayfa') {
+              // Ana sayfa tab'ına basıldığında navigation stack'i sıfırla
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Ana Sayfa' }],
+              });
+            } else {
+              navigation.navigate(route.name);
+            }
           }
         };
 
@@ -137,15 +174,15 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
           icon = (
             <Image 
               source={require('../assets/images/home.png')} 
-              style={[styles.iconImage, { tintColor: isFocused ? '#ffffff' : 'rgba(255, 255, 255, 0.6)' }]}
+              style={[styles.iconImage, { tintColor: isFocused ? '#130139' : 'rgba(19, 1, 57, 0.6)' }]}
               resizeMode="contain"
             />
           );
-        } else if (route.name === 'Portföy Havuzu') {
+        } else if (route.name === 'Portföylerim') {
           icon = (
             <Image 
               source={require('../assets/images/porfoyhavuz.png')} 
-              style={[styles.iconImage, { tintColor: isFocused ? '#ffffff' : 'rgba(255, 255, 255, 0.6)' }]}
+              style={[styles.iconImage, { tintColor: isFocused ? '#130139' : 'rgba(19, 1, 57, 0.6)' }]}
               resizeMode="contain"
             />
           );
@@ -155,11 +192,11 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
               <Text style={styles.addButtonPlus}>+</Text>
             </TouchableOpacity>
           );
-        } else if (route.name === 'Talep Havuzu') {
+        } else if (route.name === 'Taleplerim') {
           icon = (
             <Image 
               source={require('../assets/images/talephavuz.png')} 
-              style={[styles.iconImage, { tintColor: isFocused ? '#ffffff' : 'rgba(255, 255, 255, 0.6)' }]}
+              style={[styles.iconImage, { tintColor: isFocused ? '#130139' : 'rgba(19, 1, 57, 0.6)' }]}
               resizeMode="contain"
             />
           );
@@ -167,7 +204,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
           icon = (
             <Image 
               source={require('../assets/images/profil.png')} 
-              style={[styles.iconImage, { tintColor: isFocused ? '#ffffff' : 'rgba(255, 255, 255, 0.6)' }]}
+              style={[styles.iconImage, { tintColor: isFocused ? '#130139' : 'rgba(19, 1, 57, 0.6)' }]}
               resizeMode="contain"
             />
           );
@@ -188,7 +225,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
 
       {/* Enhanced Modal for Add Options */}
       <Modal
-        visible={isModalVisible}
+        visible={isModalVisible && isMounted.current}
         transparent={true}
         animationType="none"
         onRequestClose={hideModal}
@@ -255,6 +292,14 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
 };
 
 const MainTabs = () => {
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
   return (
     <View style={styles.container}>
       <Tab.Navigator
@@ -264,9 +309,9 @@ const MainTabs = () => {
         tabBar={props => <CustomTabBar {...props} />}
       >
         <Tab.Screen name="Ana Sayfa" component={HomeStack} />
-        <Tab.Screen name="Portföy Havuzu" component={PortfolioStack} />
+        <Tab.Screen name="Portföylerim" component={MyPortfolios} />
         <Tab.Screen name="Ekleme" component={Home} />
-        <Tab.Screen name="Talep Havuzu" component={RequestStack} />
+        <Tab.Screen name="Taleplerim" component={RequestStack} />
         <Tab.Screen name="Profil" component={Profile} />
       </Tab.Navigator>
     </View>
@@ -286,7 +331,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 60,
-    backgroundColor: '#E60000',
+    backgroundColor: '#FFFFFF', // Beyaz arka plan
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     marginBottom: 0,
@@ -322,7 +367,7 @@ const styles = StyleSheet.create({
   centerAddButton: {
     width: 48,
     height: 48,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#130139', // Koyu mor arka plan
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -332,13 +377,13 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
     borderWidth: 2,
-    borderColor: '#E60000',
+    borderColor: '#130139', // Koyu mor renk
   },
   
   addButtonPlus: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: 'bold',
-    color: '#E60000',
+    color: '#FFFFFF', // Beyaz metin
   },
   
   // Active Dot - Daha yakın konumlandırıldı
@@ -348,7 +393,7 @@ const styles = StyleSheet.create({
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#130139', // Koyu mor
   },
   
   // Enhanced Modal Styles
@@ -389,7 +434,7 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     paddingHorizontal: 20,
     marginVertical: 8,
-    backgroundColor: '#E60000', // Solid red buttons
+    backgroundColor: '#130139', // Koyu mor renk
     borderRadius: 20,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },

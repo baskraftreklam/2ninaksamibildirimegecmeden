@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,84 +7,41 @@ import {
   StyleSheet,
   Dimensions,
   ActivityIndicator,
+  Image,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../theme/theme';
 import { makePhoneCall, sendWhatsAppMessage, sendEmail } from '../utils/contactUtils';
+import { fetchRequests } from '../services/firestore';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const DemandPool = () => {
   const navigation = useNavigation();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState('all');
+  const [requests, setRequests] = useState([]);
 
-  // Mock data - gerçek uygulamada Firebase'den gelecek
-  const mockRequests = [
-    {
-      id: '1',
-      title: 'Atakum Denizevleri Satılık Daire Arıyorum',
-      description: '3+1, 120m², deniz manzaralı daire arıyorum',
-      city: 'Samsun',
-      district: 'Atakum',
-      neighborhood: 'Denizevleri',
-      propertyType: 'Daire',
-      roomCount: '3+1',
-      minPrice: 2000000,
-      maxPrice: 3000000,
-      minSquareMeters: 100,
-      maxSquareMeters: 150,
-      status: 'active',
-      createdAt: new Date('2024-01-15'),
-      contactInfo: {
-        name: 'Ahmet Yılmaz',
-        phone: '+90 555 123 4567',
-        email: 'ahmet@example.com'
-      }
-    },
-    {
-      id: '2',
-      title: 'İlkadım Merkez Kiralık Daire',
-      description: '2+1, merkezi konumda, ulaşımı kolay',
-      city: 'Samsun',
-      district: 'İlkadım',
-      neighborhood: 'Merkez',
-      propertyType: 'Daire',
-      roomCount: '2+1',
-      minPrice: 5000,
-      maxPrice: 8000,
-      minSquareMeters: 70,
-      maxSquareMeters: 100,
-      status: 'active',
-      createdAt: new Date('2024-01-14'),
-      contactInfo: {
-        name: 'Ayşe Demir',
-        phone: '+90 555 987 6543',
-        email: 'ayse@example.com'
-      }
-    },
-    {
-      id: '3',
-      title: 'Canik Villa Satılık',
-      description: '4+2, bahçeli, otoparklı villa',
-      city: 'Samsun',
-      district: 'Canik',
-      neighborhood: 'Villa Mahallesi',
-      propertyType: 'Villa',
-      roomCount: '4+2',
-      minPrice: 4000000,
-      maxPrice: 6000000,
-      minSquareMeters: 200,
-      maxSquareMeters: 300,
-      status: 'active',
-      createdAt: new Date('2024-01-13'),
-      contactInfo: {
-        name: 'Mehmet Kaya',
-        phone: '+90 555 456 7890',
-        email: 'mehmet@example.com'
-      }
+  // Load published requests on component mount
+  useEffect(() => {
+    loadRequests();
+  }, []);
+
+  const loadRequests = useCallback(async () => {
+    try {
+      setLoading(true);
+      // Sadece yayınlanmış talepleri getir (public view)
+      const data = await fetchRequests({}, true);
+      setRequests(data);
+      console.log('[DemandPool] published requests loaded:', data.length);
+    } catch (error) {
+      console.error('Error loading requests:', error);
+      Alert.alert('Hata', 'Talepler yüklenirken bir hata oluştu.');
+    } finally {
+      setLoading(false);
     }
-  ];
+  }, []);
 
   const formatPrice = (price) => {
     if (price >= 1000000) {
@@ -104,9 +61,9 @@ const DemandPool = () => {
   };
 
   const filteredRequests = useMemo(() => {
-    if (selectedFilter === 'all') return mockRequests;
-    return mockRequests.filter(request => request.status === selectedFilter);
-  }, [selectedFilter]);
+    if (selectedFilter === 'all') return requests;
+    return requests.filter(request => request.status === selectedFilter);
+  }, [selectedFilter, requests]);
 
   const renderRequestCard = ({ item }) => (
     <TouchableOpacity 
@@ -205,15 +162,62 @@ const DemandPool = () => {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={styles.loadingText}>Talepler yükleniyor...</Text>
+      <View style={styles.container}>
+        {/* Arka Plan */}
+        <View style={styles.backgroundContainer}>
+          <Image source={require('../assets/images/dark-bg.jpg')} style={styles.backgroundImage} />
+        </View>
+        
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Talep Havuzu</Text>
+          <Text style={styles.headerSubtitle}>
+            Müşterilerinizin aradığı portföyleri görün
+          </Text>
+        </View>
+
+        <View style={styles.filterContainer}>
+          {renderFilterButton('all', 'Tümü')}
+          {renderFilterButton('active', 'Aktif')}
+          {renderFilterButton('pending', 'Bekleyen')}
+          {renderFilterButton('completed', 'Tamamlanan')}
+        </View>
+
+        <View style={styles.listContainer}>
+          {/* Skeleton Loading Cards */}
+          {[1, 2, 3].map((index) => (
+            <View key={index} style={styles.skeletonCard}>
+              <View style={styles.skeletonHeader}>
+                <View style={styles.skeletonTitle} />
+                <View style={styles.skeletonBadge} />
+              </View>
+              <View style={styles.skeletonDescription} />
+              <View style={styles.skeletonDetails}>
+                <View style={styles.skeletonDetailRow} />
+                <View style={styles.skeletonDetailRow} />
+                <View style={styles.skeletonDetailRow} />
+              </View>
+              <View style={styles.skeletonFooter}>
+                <View style={styles.skeletonDate} />
+                <View style={styles.skeletonButtons}>
+                  <View style={styles.skeletonButton} />
+                  <View style={styles.skeletonButton} />
+                  <View style={styles.skeletonButton} />
+                </View>
+              </View>
+            </View>
+          ))}
+        </View>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
+      {/* Arka Plan */}
+      <View style={styles.backgroundContainer}>
+        <Image source={require('../assets/images/dark-bg.jpg')} style={styles.backgroundImage} />
+      </View>
+      
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Talep Havuzu</Text>
         <Text style={styles.headerSubtitle}>
@@ -251,126 +255,169 @@ const DemandPool = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+  },
+  
+  // Arka Plan - Anasayfadaki gibi
+  backgroundContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
   },
   
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: theme.colors.background,
+    backgroundColor: 'transparent',
   },
   
   loadingText: {
-    color: theme.colors.text,
+    color: '#FFFFFF',
     fontSize: 16,
     marginTop: 16,
+    fontWeight: '500',
   },
   
   header: {
-    padding: theme.spacing.lg,
-    paddingBottom: theme.spacing.md,
+    padding: 30,
+    paddingBottom: 20,
+    paddingTop: 50,
+    backgroundColor: 'rgba(19, 1, 57, 0.95)', // Daha belirgin koyu mor container
+    borderRadius: 15,
+    marginHorizontal: 20,
+    marginBottom: 20,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.4,
+    shadowRadius: 25,
+    elevation: 20,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
   },
   
   headerTitle: {
     fontSize: 28,
     fontWeight: '700',
-    color: theme.colors.text,
+    color: '#FFFFFF', // Beyaz metin
     marginBottom: 8,
+    textAlign: 'center',
   },
   
   headerSubtitle: {
     fontSize: 16,
-    color: theme.colors.textSecondary,
+    color: 'rgba(255, 255, 255, 0.8)', // Şeffaf beyaz
+    textAlign: 'center',
   },
   
   filterContainer: {
     flexDirection: 'row',
-    paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.md,
-    gap: theme.spacing.sm,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    gap: 12,
+    backgroundColor: 'rgba(19, 1, 57, 0.95)', // Daha belirgin koyu mor container
+    borderRadius: 15,
+    marginHorizontal: 20,
+    marginBottom: 20,
+    padding: 20,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.4,
+    shadowRadius: 25,
+    elevation: 20,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
   },
   
   filterButton: {
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)', // Şeffaf beyaz
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: '#ffffff', // Beyaz border
+    flex: 1,
   },
   
   filterButtonActive: {
-    backgroundColor: '#ff0000',
-    borderColor: '#ff0000',
+    backgroundColor: '#ffffff', // Beyaz arka plan
+    borderColor: '#ffffff',
   },
   
   filterButtonText: {
-    color: theme.colors.text,
+    color: '#ffffff', // Beyaz yazı
     fontSize: 14,
     fontWeight: '600',
+    textAlign: 'center',
   },
   
   filterButtonTextActive: {
-    color: theme.colors.white,
+    color: '#130139', // Koyu mor yazı
   },
   
   listContainer: {
-    padding: theme.spacing.lg,
+    padding: 20,
+    paddingTop: 0,
   },
   
   requestCard: {
-    backgroundColor: theme.colors.cardBg,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
-    marginBottom: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    shadowColor: theme.colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    backgroundColor: '#FFFFFF', // Anasayfadaki beyaz kart rengi
+    borderRadius: Math.min(width * 0.05, 15), // Anasayfadaki border radius
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(19, 1, 57, 0.3)', // Daha belirgin koyu mor border
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 12,
   },
   
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: theme.spacing.sm,
+    marginBottom: 12,
   },
   
   requestTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: theme.colors.text,
+    color: '#130139', // Anasayfadaki koyu mor metin rengi
     flex: 1,
-    marginRight: theme.spacing.sm,
+    marginRight: 12,
   },
   
   statusBadge: {
-    backgroundColor: theme.colors.success,
-    paddingHorizontal: theme.spacing.sm,
+    backgroundColor: '#130139', // Anasayfadaki koyu mor
+    paddingHorizontal: 12,
     paddingVertical: 4,
-    borderRadius: theme.borderRadius.sm,
+    borderRadius: 4,
   },
   
   statusText: {
-    color: theme.colors.white,
+    color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '600',
-
   },
   
   requestDescription: {
     fontSize: 14,
-    color: theme.colors.textSecondary,
-    marginBottom: theme.spacing.md,
+    color: '#374151', // Anasayfadaki gri metin rengi
+    marginBottom: 16,
     lineHeight: 20,
   },
   
   requestDetails: {
-    marginBottom: theme.spacing.md,
+    marginBottom: 16,
   },
   
   detailRow: {
@@ -381,13 +428,13 @@ const styles = StyleSheet.create({
   
   detailLabel: {
     fontSize: 14,
-    color: theme.colors.textSecondary,
+    color: '#374151', // Anasayfadaki gri metin rengi
     fontWeight: '500',
   },
   
   detailValue: {
     fontSize: 14,
-    color: theme.colors.text,
+    color: '#130139', // Anasayfadaki koyu mor
     fontWeight: '600',
   },
   
@@ -395,31 +442,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: theme.spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
+    paddingTop: 16,
+    borderTopWidth: 2,
+    borderTopColor: 'rgba(19, 1, 57, 0.2)', // Daha belirgin koyu mor border
   },
   
   dateText: {
     fontSize: 12,
-    color: theme.colors.textSecondary,
+    color: '#374151', // Anasayfadaki gri metin rengi
   },
   
   contactButtons: {
     flexDirection: 'row',
-    gap: theme.spacing.sm,
+    gap: 12,
   },
   
   phoneButton: {
     flex: 1,
-    backgroundColor: theme.colors.success,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
+    backgroundColor: '#130139', // Anasayfadaki koyu mor
+    paddingVertical: 12,
+    borderRadius: 8,
     alignItems: 'center',
   },
   
   phoneButtonText: {
-    color: theme.colors.white,
+    color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '600',
   },
@@ -427,27 +474,27 @@ const styles = StyleSheet.create({
   whatsappButton: {
     flex: 1,
     backgroundColor: '#25D366',
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
+    paddingVertical: 12,
+    borderRadius: 8,
     alignItems: 'center',
   },
   
   whatsappButtonText: {
-    color: theme.colors.white,
+    color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '600',
   },
   
   emailButton: {
     flex: 1,
-    backgroundColor: theme.colors.info,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
+    backgroundColor: '#130139', // Anasayfadaki koyu mor
+    paddingVertical: 12,
+    borderRadius: 8,
     alignItems: 'center',
   },
   
   emailButtonText: {
-    color: theme.colors.white,
+    color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '600',
   },
@@ -455,6 +502,17 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: 'center',
     paddingVertical: 60,
+    backgroundColor: 'rgba(19, 1, 57, 0.95)', // Daha belirgin koyu mor container
+    borderRadius: 15,
+    padding: 30,
+    marginTop: 20,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.4,
+    shadowRadius: 25,
+    elevation: 20,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
   },
   
   emptyIcon: {
@@ -464,17 +522,100 @@ const styles = StyleSheet.create({
   
   emptyText: {
     fontSize: 18,
-    color: theme.colors.text,
+    color: '#FFFFFF', // Beyaz metin
     marginBottom: 8,
     fontWeight: '600',
+    textAlign: 'center',
   },
   
   emptySubtext: {
     fontSize: 14,
-    color: theme.colors.textSecondary,
+    color: 'rgba(255, 255, 255, 0.8)', // Şeffaf beyaz
     textAlign: 'center',
+  },
+
+  // Skeleton Loading Styles
+  skeletonCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: Math.min(width * 0.05, 15),
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(19, 1, 57, 0.3)',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 12,
+  },
+
+  skeletonHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+
+  skeletonTitle: {
+    height: 20,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 4,
+    flex: 1,
+    marginRight: 12,
+  },
+
+  skeletonBadge: {
+    width: 60,
+    height: 24,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 4,
+  },
+
+  skeletonDescription: {
+    height: 16,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 4,
+    marginBottom: 16,
+  },
+
+  skeletonDetails: {
+    marginBottom: 16,
+  },
+
+  skeletonDetailRow: {
+    height: 14,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 4,
+    marginBottom: 4,
+  },
+
+  skeletonFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 16,
+    borderTopWidth: 2,
+    borderTopColor: 'rgba(19, 1, 57, 0.2)',
+  },
+
+  skeletonDate: {
+    width: 80,
+    height: 12,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 4,
+  },
+
+  skeletonButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+
+  skeletonButton: {
+    flex: 1,
+    height: 36,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 8,
   },
 });
 
 export default DemandPool;
-
