@@ -23,8 +23,8 @@ export const fetchPortfolios = async (filters = {}, showOnlyPublished = true) =>
       cover: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1600&auto=format&fit=crop',
       isPublished: true,
       userId: 'user-1',
-      createdAt: new Date('2024-01-15'),
-      updatedAt: new Date('2024-01-15')
+      createdAt: '2024-01-15T00:00:00.000Z',
+      updatedAt: '2024-01-15T00:00:00.000Z'
     },
     {
       id: '2',
@@ -44,8 +44,8 @@ export const fetchPortfolios = async (filters = {}, showOnlyPublished = true) =>
       cover: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1600&auto=format&fit=crop',
       isPublished: true,
       userId: 'user-2',
-      createdAt: new Date('2024-01-14'),
-      updatedAt: new Date('2024-01-14')
+      createdAt: '2024-01-14T00:00:00.000Z',
+      updatedAt: '2024-01-14T00:00:00.000Z'
     },
     {
       id: '3',
@@ -65,8 +65,8 @@ export const fetchPortfolios = async (filters = {}, showOnlyPublished = true) =>
       cover: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=1600&auto=format&fit=crop',
       isPublished: false,
       userId: 'user-3',
-      createdAt: new Date('2024-01-13'),
-      updatedAt: new Date('2024-01-13')
+      createdAt: '2024-01-13T00:00:00.000Z',
+      updatedAt: '2024-01-13T00:00:00.000Z'
     },
     {
       id: '4',
@@ -86,8 +86,8 @@ export const fetchPortfolios = async (filters = {}, showOnlyPublished = true) =>
       cover: 'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=1600&auto=format&fit=crop',
       isPublished: true,
       userId: 'user-4',
-      createdAt: new Date('2024-01-12'),
-      updatedAt: new Date('2024-01-12')
+      createdAt: '2024-01-12T00:00:00.000Z',
+      updatedAt: '2024-01-12T00:00:00.000Z'
     },
     {
       id: '5',
@@ -107,8 +107,8 @@ export const fetchPortfolios = async (filters = {}, showOnlyPublished = true) =>
       cover: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=1600&auto=format&fit=crop',
       isPublished: true,
       userId: 'user-5',
-      createdAt: new Date('2024-01-11'),
-      updatedAt: new Date('2024-01-11')
+      createdAt: '2024-01-11T00:00:00.000Z',
+      updatedAt: '2024-01-11T00:00:00.000Z'
     }
   ];
 
@@ -165,8 +165,8 @@ export const fetchUserPortfolios = async (userId) => {
       cover: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1600&auto=format&fit=crop',
       isPublished: true,
       userId: userId,
-      createdAt: new Date('2024-01-15'),
-      updatedAt: new Date('2024-01-15')
+      createdAt: '2024-01-15T00:00:00.000Z',
+      updatedAt: '2024-01-15T00:00:00.000Z'
     },
     {
       id: '2',
@@ -186,8 +186,8 @@ export const fetchUserPortfolios = async (userId) => {
       cover: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1600&auto=format&fit=crop',
       isPublished: false,
       userId: userId,
-      createdAt: new Date('2024-01-14'),
-      updatedAt: new Date('2024-01-14')
+      createdAt: '2024-01-14T00:00:00.000Z',
+      updatedAt: '2024-01-14T00:00:00.000Z'
     }
   ];
 };
@@ -214,7 +214,7 @@ export const fetchRequests = async (filters = {}, showOnlyPublished = true) => {
       status: 'active',
       isPublished: true,
       userId: 'user-1',
-      createdAt: new Date('2024-01-15'),
+      createdAt: '2024-01-15T00:00:00.000Z',
       contactInfo: {
         name: 'Ahmet Yılmaz',
         phone: '+90 555 123 4567',
@@ -237,7 +237,7 @@ export const fetchRequests = async (filters = {}, showOnlyPublished = true) => {
       status: 'active',
       isPublished: false,
       userId: 'user-2',
-      createdAt: new Date('2024-01-14'),
+      createdAt: '2024-01-14T00:00:00.000Z',
       contactInfo: {
         name: 'Ayşe Demir',
         phone: '+90 555 987 6543',
@@ -260,7 +260,7 @@ export const fetchRequests = async (filters = {}, showOnlyPublished = true) => {
       status: 'active',
       isPublished: true,
       userId: 'user-3',
-      createdAt: new Date('2024-01-13'),
+      createdAt: '2024-01-13T00:00:00.000Z',
       contactInfo: {
         name: 'Mehmet Kaya',
         phone: '+90 555 456 7890',
@@ -316,7 +316,7 @@ export const fetchUserRequests = async (userId) => {
       status: 'active',
       isPublished: true,
       userId: userId,
-      createdAt: new Date('2024-01-15'),
+      createdAt: '2024-01-15T00:00:00.000Z',
       locations: ['Denizevleri', 'Çamlıyazı', 'Atakent'],
       contactInfo: {
         name: 'Ahmet Yılmaz',
@@ -340,7 +340,7 @@ export const fetchUserRequests = async (userId) => {
       status: 'active',
       isPublished: false,
       userId: userId,
-      createdAt: new Date('2024-01-14'),
+      createdAt: '2024-01-14T00:00:00.000Z',
       locations: ['Merkez', 'Cumhuriyet', 'İstiklal'],
       contactInfo: {
         name: 'Ayşe Demir',
@@ -356,7 +356,6 @@ export const togglePortfolioPublishStatus = async (portfolioId, isPublished) => 
   // Simulate API delay - reduced for better UX
   await new Promise(resolve => setTimeout(resolve, 200));
   
-  console.log(`Portfolio ${portfolioId} publish status changed to: ${isPublished}`);
   return { success: true, isPublished };
 };
 
@@ -365,7 +364,6 @@ export const toggleRequestPublishStatus = async (requestId, isPublished) => {
   // Simulate API delay - reduced for better UX
   await new Promise(resolve => setTimeout(resolve, 200));
   
-  console.log(`Request ${requestId} publish status changed to: ${isPublished}`);
   return { success: true, isPublished };
 };
 
@@ -379,11 +377,10 @@ export const addPortfolio = async (portfolioData, userId) => {
     ...portfolioData,
     userId,
     isPublished: true,
-    createdAt: new Date(),
-    updatedAt: new Date()
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   };
   
-  console.log('New portfolio added:', newPortfolio);
   return { success: true, portfolio: newPortfolio };
 };
 
@@ -397,10 +394,9 @@ export const addRequest = async (requestData, userId) => {
     ...requestData,
     userId,
     isPublished: requestData.publishToPool || false,
-    createdAt: new Date(),
-    updatedAt: new Date()
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   };
   
-  console.log('New request added:', newRequest);
   return { success: true, request: newRequest };
 };

@@ -5,13 +5,11 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Dimensions,
   KeyboardAvoidingView,
   Platform,
   Animated,
 } from 'react-native';
-
-const { width, height } = Dimensions.get('window');
+import { theme } from '../theme/theme';
 
 const Login = ({ navigation }) => {
   const [phone, setPhone] = useState('');
@@ -81,33 +79,25 @@ const Login = ({ navigation }) => {
         <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
           {/* Logo */}
           <View style={styles.logoContainer}>
-            <Text style={styles.logoIcon}>
-              <Text>🏠</Text>
-            </Text>
-            <Text style={styles.logoText}>
-              <Text>Talepify</Text>
-            </Text>
+            <Text style={styles.logoIcon}>🏠</Text>
+            <Text style={styles.logoText}>Talepify</Text>
           </View>
 
           {/* Form */}
           <View style={styles.formContainer}>
             {!showOtpInput ? (
               <>
-                <Text style={styles.title}>
-                  <Text>Telefon Numarası</Text>
-                </Text>
+                <Text style={styles.title}>Telefon Numarası</Text>
                 <Text style={styles.subtitle}>
-                  <Text>Giriş yapmak için telefon numaranızı girin</Text>
+                  Giriş yapmak için telefon numaranızı girin
                 </Text>
 
                 <View style={styles.inputContainer}>
-                  <Text style={styles.inputIcon}>
-                    <Text>📞</Text>
-                  </Text>
+                  <Text style={styles.inputIcon}>📞</Text>
                   <TextInput
                     style={styles.input}
                     placeholder="0555 123 45 67"
-                    placeholderTextColor="#666"
+                    placeholderTextColor={theme.colors.textSecondary}
                     value={phone}
                     onChangeText={setPhone}
                     keyboardType="phone-pad"
@@ -121,26 +111,18 @@ const Login = ({ navigation }) => {
                   disabled={loading}
                 >
                   <View style={styles.loadingContainer}>
-                    {loading && <Text style={styles.spinning}>
-                      <Text>⏳</Text>
-                    </Text>}
+                    {loading && <Text style={styles.spinning}>⏳</Text>}
                     <Text style={styles.buttonText}>
-                      {loading ? (
-                        <Text>Gönderiliyor...</Text>
-                      ) : (
-                        <Text>OTP Gönder</Text>
-                      )}
+                      {loading ? 'Gönderiliyor...' : 'OTP Gönder'}
                     </Text>
                   </View>
                 </TouchableOpacity>
               </>
             ) : (
               <>
-                <Text style={styles.title}>
-                  <Text>OTP Doğrulama</Text>
-                </Text>
+                <Text style={styles.title}>OTP Doğrulama</Text>
                 <Text style={styles.subtitle}>
-                  <Text>Telefonunuza gönderilen 6 haneli kodu girin</Text>
+                  Telefonunuza gönderilen 6 haneli kodu girin
                 </Text>
 
                 <View style={styles.otpContainer}>
@@ -168,23 +150,15 @@ const Login = ({ navigation }) => {
                   disabled={loading}
                 >
                   <View style={styles.loadingContainer}>
-                    {loading && <Text style={styles.spinning}>
-                      <Text>⏳</Text>
-                    </Text>}
+                    {loading && <Text style={styles.spinning}>⏳</Text>}
                     <Text style={styles.buttonText}>
-                      {showOtpInput ? (
-                        <Text>OTP Doğrulama</Text>
-                      ) : (
-                        <Text>Giriş Yap</Text>
-                      )}
+                      {showOtpInput ? 'OTP Doğrulama' : 'Giriş Yap'}
                     </Text>
                   </View>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.resendButton}>
-                  <Text style={styles.resendText}>
-                    <Text>Tekrar Gönder</Text>
-                  </Text>
+                  <Text style={styles.resendText}>Tekrar Gönder</Text>
                 </TouchableOpacity>
               </>
             )}
@@ -192,14 +166,12 @@ const Login = ({ navigation }) => {
             {/* Register Link */}
             <View style={styles.footer}>
               <Text style={styles.footerText}>
-                <Text>Hesabınız yok mu? </Text>
+                Hesabınız yok mu?{' '}
               </Text>
               <TouchableOpacity
                 onPress={() => navigation.navigate('Register')}
               >
-                <Text style={styles.linkText}>
-                  <Text>Kayıt Ol</Text>
-                </Text>
+                <Text style={styles.linkText}>Kayıt Ol</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -212,7 +184,7 @@ const Login = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#07141e',
+    backgroundColor: theme.colors.background,
   },
   keyboardView: {
     flex: 1,
@@ -220,7 +192,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: theme.spacing.xxl,
   },
   logoContainer: {
     alignItems: 'center',
@@ -231,73 +203,69 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   logoText: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#fff',
+    fontSize: theme.fontSizes.xxxl,
+    fontWeight: theme.fontWeights.bold,
+    color: theme.colors.white,
   },
   formContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 16,
-    padding: 24,
+    backgroundColor: theme.colors.primary + '20',
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.xxl,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: theme.colors.borderLight,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#fff',
+    fontSize: theme.fontSizes.xxxl,
+    fontWeight: theme.fontWeights.bold,
+    color: theme.colors.white,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: theme.spacing.sm,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#ccc',
+    fontSize: theme.fontSizes.xl,
+    color: theme.colors.textWhite,
     textAlign: 'center',
     marginBottom: 32,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    marginBottom: 24,
+    backgroundColor: theme.colors.primary + '15',
+    borderRadius: theme.borderRadius.md,
+    paddingHorizontal: theme.spacing.md,
+    marginBottom: theme.spacing.xxl,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: theme.colors.borderLight,
   },
   inputIcon: {
     fontSize: 20,
-    color: '#E50000',
-    marginRight: 12,
+    color: theme.colors.primary,
+    marginRight: theme.spacing.md,
   },
   input: {
     flex: 1,
     height: 50,
-    color: '#fff',
-    fontSize: 16,
+    color: theme.colors.white,
+    fontSize: theme.fontSizes.xl,
   },
   button: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#E50000',
-    borderRadius: 12,
-    paddingVertical: 16,
-    marginBottom: 16,
-    shadowColor: '#E50000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.md,
+    paddingVertical: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+    ...theme.shadows.medium,
   },
   buttonDisabled: {
     opacity: 0.7,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
+    color: theme.colors.white,
+    fontSize: theme.fontSizes.xl,
+    fontWeight: theme.fontWeights.semibold,
+    marginLeft: theme.spacing.sm,
   },
   loadingContainer: {
     flexDirection: 'row',
@@ -305,28 +273,28 @@ const styles = StyleSheet.create({
   },
   spinning: {
     fontSize: 20,
-    color: '#fff',
+    color: theme.colors.white,
     transform: [{ rotate: '360deg' }],
   },
   otpContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 24,
+    marginBottom: theme.spacing.xxl,
   },
   otpDigitContainer: {
     width: 45,
     height: 55,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: 8,
+    backgroundColor: theme.colors.primary + '15',
+    borderRadius: theme.borderRadius.sm,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: theme.colors.borderLight,
   },
   otpDigit: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#fff',
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.semibold,
+    color: theme.colors.white,
   },
   hiddenOtpInput: {
     position: 'absolute',
@@ -335,24 +303,24 @@ const styles = StyleSheet.create({
   },
   resendButton: {
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: theme.spacing.md,
   },
   resendText: {
-    color: '#E50000',
-    fontSize: 14,
-    fontWeight: '500',
+    color: theme.colors.primary,
+    fontSize: theme.fontSizes.md,
+    fontWeight: theme.fontWeights.medium,
   },
   footer: {
     marginTop: 32,
     alignItems: 'center',
   },
   footerText: {
-    color: '#ccc',
-    fontSize: 14,
+    color: theme.colors.textWhite,
+    fontSize: theme.fontSizes.md,
   },
   linkText: {
-    color: '#E50000',
-    fontWeight: '600',
+    color: theme.colors.primary,
+    fontWeight: theme.fontWeights.semibold,
   },
 });
 

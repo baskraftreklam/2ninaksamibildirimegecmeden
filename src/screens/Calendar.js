@@ -5,16 +5,14 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
-  Dimensions,
   Modal,
   TextInput,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../theme/theme';
 import { makePhoneCall, sendWhatsAppMessage } from '../utils/contactUtils';
-
-const { width } = Dimensions.get('window');
 
 const Calendar = () => {
   const navigation = useNavigation();
@@ -31,12 +29,12 @@ const Calendar = () => {
   });
 
   // Mock data - gerçek uygulamada Firebase'den gelecek
-  const mockAppointments = [
+  const mockAppointments = useMemo(() => [
     {
       id: '1',
       title: 'Müşteri Görüşmesi - Ahmet Yılmaz',
       description: 'Atakum Denizevleri daire görüşmesi',
-      date: new Date('2024-01-20'),
+      date: new Date(),
       time: '14:00',
       type: 'meeting',
       clientName: 'Ahmet Yılmaz',
@@ -47,7 +45,7 @@ const Calendar = () => {
       id: '2',
       title: 'Portföy İnceleme - Villa',
       description: 'Canik villa detay incelemesi',
-      date: new Date('2024-01-21'),
+      date: new Date(Date.now() + 24 * 60 * 60 * 1000), // Yarın
       time: '10:30',
       type: 'inspection',
       clientName: 'Mehmet Kaya',
@@ -58,14 +56,14 @@ const Calendar = () => {
       id: '3',
       title: 'Sözleşme İmza - Daire',
       description: 'İlkadım daire sözleşme imzası',
-      date: new Date('2024-01-22'),
+      date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 gün sonra
       time: '16:00',
       type: 'contract',
       clientName: 'Ayşe Demir',
       phone: '+90 555 987 6543',
       status: 'confirmed'
     }
-  ];
+  ], []);
 
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString('tr-TR', {
@@ -74,10 +72,6 @@ const Calendar = () => {
       month: 'long',
       day: 'numeric'
     });
-  };
-
-  const formatTime = (time) => {
-    return time;
   };
 
   const getTypeIcon = (type) => {
@@ -130,7 +124,17 @@ const Calendar = () => {
   const renderAppointmentCard = ({ item }) => (
     <TouchableOpacity 
       style={styles.appointmentCard}
-      onPress={() => navigation.navigate('AppointmentDetail', { appointment: item })}
+      onPress={() => {
+        // Randevu detayını modal olarak göster veya Profile sayfasına yönlendir
+        Alert.alert(
+          'Randevu Detayı',
+          `${item.title}\n\n${item.description}\n\nMüşteri: ${item.clientName}\nSaat: ${item.time}\nDurum: ${getStatusLabel(item.status)}`,
+          [
+            { text: 'Tamam', style: 'default' },
+            { text: 'Düzenle', onPress: () => setShowAddModal(true) }
+          ]
+        );
+      }}
     >
       <View style={styles.cardHeader}>
         <View style={styles.typeContainer}>
@@ -158,7 +162,7 @@ const Calendar = () => {
         
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>Saat:</Text>
-          <Text style={styles.detailValue}>{formatTime(item.time)}</Text>
+          <Text style={styles.detailValue}>{item.time}</Text>
         </View>
       </View>
 
@@ -229,10 +233,18 @@ const Calendar = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Takvim</Text>
-        <Text style={styles.headerSubtitle}>
-          Randevularınızı yönetin ve planlayın
-        </Text>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.backIcon}>←</Text>
+        </TouchableOpacity>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>Takvim</Text>
+          <Text style={styles.headerSubtitle}>
+            Randevularınızı yönetin ve planlayın
+          </Text>
+        </View>
       </View>
 
       <View style={styles.dateSelector}>
@@ -350,19 +362,35 @@ const styles = StyleSheet.create({
   },
   
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: theme.spacing.lg,
     paddingBottom: theme.spacing.md,
   },
   
+  backButton: {
+    padding: theme.spacing.sm,
+    marginRight: theme.spacing.md,
+  },
+  
+  backIcon: {
+    fontSize: 24,
+    color: theme.colors.text,
+  },
+  
+  headerContent: {
+    flex: 1,
+  },
+  
   headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
+    fontSize: theme.fontSizes.xxxl,
+    fontWeight: theme.fontWeights.bold,
     color: theme.colors.text,
     marginBottom: 8,
   },
   
   headerSubtitle: {
-    fontSize: 16,
+    fontSize: theme.fontSizes.xxl,
     color: theme.colors.textSecondary,
   },
   
@@ -379,19 +407,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: theme.spacing.md,
     borderRadius: theme.borderRadius.lg,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: theme.colors.surface,
     borderWidth: 1,
     borderColor: theme.colors.border,
     minWidth: 60,
   },
   
   dateButtonActive: {
-    backgroundColor: '#ff0000',
-    borderColor: '#ff0000',
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
   },
   
   dayName: {
-    fontSize: 12,
+    fontSize: theme.fontSizes.md,
     color: theme.colors.textSecondary,
     marginBottom: 4,
   },
@@ -401,8 +429,8 @@ const styles = StyleSheet.create({
   },
   
   dayNumber: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.bold,
     color: theme.colors.text,
   },
   
@@ -419,13 +447,13 @@ const styles = StyleSheet.create({
   },
   
   selectedDateText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.semibold,
     color: theme.colors.text,
   },
   
   addButton: {
-    backgroundColor: '#ff0000',
+    backgroundColor: theme.colors.primary,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
     borderRadius: theme.borderRadius.md,
@@ -433,8 +461,8 @@ const styles = StyleSheet.create({
   
   addButtonText: {
     color: theme.colors.white,
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: theme.fontSizes.xl,
+    fontWeight: theme.fontWeights.semibold,
   },
   
   listContainer: {
@@ -448,11 +476,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    shadowColor: theme.colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    ...theme.shadows.medium,
   },
   
   cardHeader: {
@@ -473,9 +497,9 @@ const styles = StyleSheet.create({
   },
   
   typeLabel: {
-    fontSize: 14,
+    fontSize: theme.fontSizes.xl,
     color: theme.colors.textSecondary,
-    fontWeight: '500',
+    fontWeight: theme.fontWeights.medium,
   },
   
   statusBadge: {
@@ -486,19 +510,19 @@ const styles = StyleSheet.create({
   
   statusText: {
     color: theme.colors.white,
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: theme.fontSizes.md,
+    fontWeight: theme.fontWeights.semibold,
   },
   
   appointmentTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.semibold,
     color: theme.colors.text,
     marginBottom: theme.spacing.sm,
   },
   
   appointmentDescription: {
-    fontSize: 14,
+    fontSize: theme.fontSizes.xl,
     color: theme.colors.textSecondary,
     marginBottom: theme.spacing.md,
     lineHeight: 20,
@@ -515,15 +539,15 @@ const styles = StyleSheet.create({
   },
   
   detailLabel: {
-    fontSize: 14,
+    fontSize: theme.fontSizes.xl,
     color: theme.colors.textSecondary,
-    fontWeight: '500',
+    fontWeight: theme.fontWeights.medium,
   },
   
   detailValue: {
-    fontSize: 14,
+    fontSize: theme.fontSizes.xl,
     color: theme.colors.text,
-    fontWeight: '600',
+    fontWeight: theme.fontWeights.semibold,
   },
   
   cardFooter: {
@@ -541,13 +565,13 @@ const styles = StyleSheet.create({
   
   phoneButtonText: {
     color: theme.colors.white,
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: theme.fontSizes.xl,
+    fontWeight: theme.fontWeights.semibold,
   },
   
   whatsappButton: {
     flex: 1,
-    backgroundColor: '#25D366',
+    backgroundColor: theme.colors.info,
     paddingVertical: theme.spacing.sm,
     borderRadius: theme.borderRadius.md,
     alignItems: 'center',
@@ -555,8 +579,8 @@ const styles = StyleSheet.create({
   
   whatsappButtonText: {
     color: theme.colors.white,
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: theme.fontSizes.xl,
+    fontWeight: theme.fontWeights.semibold,
   },
   
   emptyContainer: {
@@ -570,21 +594,21 @@ const styles = StyleSheet.create({
   },
   
   emptyText: {
-    fontSize: 18,
+    fontSize: theme.fontSizes.xxl,
     color: theme.colors.text,
     marginBottom: 8,
-    fontWeight: '600',
+    fontWeight: theme.fontWeights.semibold,
   },
   
   emptySubtext: {
-    fontSize: 14,
+    fontSize: theme.fontSizes.xl,
     color: theme.colors.textSecondary,
     textAlign: 'center',
   },
   
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: theme.colors.overlay,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -593,13 +617,13 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.cardBg,
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.lg,
-    width: width * 0.9,
+    width: '90%',
     maxHeight: '80%',
   },
   
   modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.bold,
     color: theme.colors.text,
     marginBottom: theme.spacing.lg,
     textAlign: 'center',
@@ -615,8 +639,8 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.inputBorder,
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.md,
-    color: theme.colors.text,
-    fontSize: 16,
+    color: theme.colors.inputText,
+    fontSize: theme.fontSizes.xxl,
     marginBottom: theme.spacing.md,
   },
   
@@ -627,7 +651,7 @@ const styles = StyleSheet.create({
   
   cancelButton: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: theme.colors.surface,
     paddingVertical: theme.spacing.md,
     borderRadius: theme.borderRadius.md,
     alignItems: 'center',
@@ -635,13 +659,13 @@ const styles = StyleSheet.create({
   
   cancelButtonText: {
     color: theme.colors.text,
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.semibold,
   },
   
   saveButton: {
     flex: 1,
-    backgroundColor: '#ff0000',
+    backgroundColor: theme.colors.primary,
     paddingVertical: theme.spacing.md,
     borderRadius: theme.borderRadius.md,
     alignItems: 'center',
@@ -649,8 +673,8 @@ const styles = StyleSheet.create({
   
   saveButtonText: {
     color: theme.colors.white,
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.semibold,
   },
 });
 

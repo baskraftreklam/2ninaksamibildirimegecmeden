@@ -1,8 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, Dimensions, Text, TouchableOpacity, Linking } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, Linking } from 'react-native';
 import { theme } from '../theme/theme';
-
-const { width, height } = Dimensions.get('window');
 
 const DisplayMap = ({ position, style, onPress }) => {
   if (!position || !position.latitude || !position.longitude) {

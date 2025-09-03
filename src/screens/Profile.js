@@ -5,43 +5,25 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  Dimensions,
   Alert,
   Animated,
   Image,
   Linking,
   FlatList,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { theme } from '../theme/theme';
 import ListingCard from '../components/ListingCard';
-
-const { width, height } = Dimensions.get('window');
+import { useAuth } from '../context/AuthContext';
 
 const Profile = () => {
   const navigation = useNavigation();
+  const { signOut, userProfile } = useAuth();
   const [fadeAnim] = useState(new Animated.Value(0));
   const [scaleAnim] = useState(new Animated.Value(0.8));
 
-  // Mock user data - gerçek uygulamada AuthContext'ten gelecek
-  const [currentUser, setCurrentUser] = useState({
-    id: '1',
-    name: 'Ahmet Yılmaz',
-    email: 'ahmet@example.com',
-    phone: '+90 555 123 45 67',
-    officeName: 'Yılmaz Emlak',
-    city: 'Samsun',
-    profilePicture: null,
-    socialInstagram: 'https://instagram.com/ahmetyilmaz',
-    socialFacebook: 'https://facebook.com/ahmetyilmaz',
-    socialYoutube: 'https://youtube.com/@ahmetyilmaz',
-    createdAt: new Date('2023-01-15'),
-    subscription: {
-      plan: 'Premium',
-      status: 'active',
-      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-    }
-  });
+  // Gerçek kullanıcı verileri - AuthContext'ten geliyor
+  const [currentUser, setCurrentUser] = useState(null);
 
   // Mock user portfolios
   const [userPortfolios, setUserPortfolios] = useState([
@@ -81,6 +63,53 @@ const Profile = () => {
     }
   ]);
 
+  // Her profil sayfasına girişte verileri yenile
+  useFocusEffect(
+    React.useCallback(() => {
+      // AuthContext'ten kullanıcı verilerini al
+      if (userProfile) {
+        setCurrentUser({
+          id: userProfile.uid,
+          name: userProfile.displayName || 'Kullanıcı',
+          email: userProfile.phoneNumber || '',
+          phone: userProfile.phoneNumber || '',
+          officeName: userProfile.officeName || '',
+          city: userProfile.city || '',
+          profilePicture: userProfile.profilePicture || null,
+          socialInstagram: '',
+          socialFacebook: '',
+          socialYoutube: '',
+          createdAt: userProfile.createdAt || new Date(),
+          subscription: {
+            plan: 'Deneme Sürümü',
+            status: 'active',
+            endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 gün
+        }
+        });
+      } else {
+        // userProfile yoksa varsayılan değerlerle set et
+        setCurrentUser({
+          id: 'guest',
+          name: 'Misafir Kullanıcı',
+          email: '',
+          phone: '',
+          officeName: '',
+          city: '',
+          profilePicture: null,
+          socialInstagram: '',
+          socialFacebook: '',
+          socialYoutube: '',
+                    createdAt: new Date().toISOString(),
+          subscription: {
+            plan: 'Deneme Sürümü',
+            status: 'active',
+            endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 gün
+        }
+        });
+      }
+    }, [userProfile])
+  );
+
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -101,6 +130,33 @@ const Profile = () => {
     navigation.navigate('EditProfile', { user: currentUser });
   };
 
+  const handleSignOut = async () => {
+    Alert.alert(
+      'Çıkış Yap',
+      'Hesaptan çıkış yapmak istediğinizden emin misiniz?',
+      [
+        { text: 'Vazgeç', style: 'cancel' },
+        {
+          text: 'Çıkış Yap',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await signOut();
+              // Çıkış sonrası Login sayfasına yönlendir
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Login' }],
+              });
+            } catch (error) {
+              console.error('Çıkış yapılırken hata:', error);
+              Alert.alert('Hata', 'Çıkış yapılırken bir hata oluştu.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleSubscriptionPress = () => {
     navigation.navigate('Subscription');
   };
@@ -114,7 +170,7 @@ const Profile = () => {
   };
 
   const handlePortfolioPress = (portfolio) => {
-    navigation.navigate('PropertyDetail', { portfolio });
+    navigation.navigate('Ana Sayfa', { screen: 'PropertyDetail', params: { portfolio } });
   };
 
   const handleToggleVisibility = (portfolioId) => {
@@ -146,7 +202,8 @@ const Profile = () => {
   };
 
   const formatDate = (date) => {
-    return date.toLocaleDateString('tr-TR', {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return dateObj.toLocaleDateString('tr-TR', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -154,7 +211,7 @@ const Profile = () => {
   };
 
   const getAvatarUrl = (name) => {
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=ff0000&color=fff&size=200`;
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${theme.colors.primary.replace('#', '')}&color=fff&size=200`;
   };
 
   const renderProfileHeader = () => (
@@ -193,7 +250,7 @@ const Profile = () => {
         </View>
         <View style={styles.statItem}>
           <Text style={styles.statNumber}>
-            {Math.floor((new Date() - currentUser.createdAt) / (1000 * 60 * 60 * 24))}
+            {Math.floor((new Date() - new Date(currentUser.createdAt)) / (1000 * 60 * 60 * 24))}
           </Text>
           <Text style={styles.statLabel}>Gün</Text>
         </View>
@@ -252,6 +309,92 @@ const Profile = () => {
     </View>
   );
 
+  const renderSubscriptionSection = () => (
+    <View style={styles.section}>
+      <View style={styles.subscriptionHeader}>
+        <Text style={styles.sectionTitle}>Abonelik Durumu</Text>
+        <TouchableOpacity
+          style={styles.subscriptionButton}
+          onPress={handleSubscriptionPress}
+        >
+          <Text style={styles.subscriptionButtonText}>📊</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.subscriptionCard}>
+        <View style={styles.subscriptionInfo}>
+          <Text style={styles.subscriptionPlan}>{currentUser.subscription.plan}</Text>
+          <Text style={styles.subscriptionStatus}>
+            Durum: {currentUser.subscription.status === 'active' ? 'Aktif' : 'Pasif'}
+          </Text>
+          <Text style={styles.subscriptionExpiry}>
+            Bitiş: {formatDate(currentUser.subscription.endDate)}
+          </Text>
+        </View>
+        
+        <View style={styles.subscriptionActions}>
+          <TouchableOpacity
+            style={styles.subscriptionActionButton}
+            onPress={() => navigation.navigate('SubscriptionManagement')}
+          >
+            <Text style={styles.subscriptionActionText}>⚙️ Yönet</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
+
+  const renderReferralSection = () => (
+    <View style={styles.section}>
+      <View style={styles.referralHeader}>
+        <Text style={styles.sectionTitle}>Referans Sistemi</Text>
+        <TouchableOpacity
+          style={styles.referralButton}
+          onPress={() => navigation.navigate('ReferralSystem')}
+        >
+          <Text style={styles.referralButtonText}>📈</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.referralCard}>
+        <View style={styles.referralInfo}>
+          <Text style={styles.referralTitle}>Referans Kodunuz</Text>
+          {userProfile?.referralCode ? (
+            <View style={styles.referralCodeContainer}>
+              <Text style={styles.referralCode}>{userProfile.referralCode}</Text>
+              <TouchableOpacity
+                style={styles.copyButton}
+                onPress={() => {
+                  // Referans kodu kopyalama işlemi
+                  Alert.alert('Kopyalandı', 'Referans kodu panoya kopyalandı!');
+                }}
+              >
+                <Text style={styles.copyButtonText}>📋</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <Text style={styles.noReferralCode}>Henüz referans kodunuz yok</Text>
+          )}
+          
+          <Text style={styles.referralDescription}>
+            Referans kodunuzu paylaşarak arkadaşlarınızı davet edin. Her abonelik satın alımında 30 gün ek süre kazanın!
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+
+  // Loading durumu
+  if (!currentUser) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Yükleniyor...</Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       {/* Arka Plan */}
@@ -276,12 +419,30 @@ const Profile = () => {
           <TouchableOpacity style={styles.headerButton}>
             <Image source={require('../assets/images/icons/menu.png')} style={styles.headerButtonIcon} />
           </TouchableOpacity>
+                      <TouchableOpacity 
+              style={styles.headerButton}
+              onPress={() => navigation.navigate('NotificationTest')}
+            >
+            <Text style={styles.testButtonText}>🧪</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {renderProfileHeader()}
+        {renderSubscriptionSection()}
+        {renderReferralSection()}
         {renderPortfolios()}
+        
+        {/* Çıkış Yapma Butonu */}
+        <View style={styles.signOutSection}>
+          <TouchableOpacity 
+            style={styles.signOutButton}
+            onPress={handleSignOut}
+          >
+            <Text style={styles.signOutButtonText}>🚪 Çıkış Yap</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </View>
   );
@@ -308,8 +469,8 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.lg,
     paddingTop: 50,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -332,28 +493,33 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 15,
+    marginLeft: theme.spacing.md,
   },
   
   headerButtonIcon: {
     width: 24,
     height: 24,
     resizeMode: 'contain',
-    tintColor: '#FFFFFF', // Beyaz renk
+    tintColor: theme.colors.white,
+  },
+  
+  testButtonText: {
+    fontSize: theme.fontSizes.xxl,
+    color: theme.colors.white,
   },
   
   headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontSize: theme.fontSizes.xxxl,
+    fontWeight: theme.fontWeights.bold,
+    color: theme.colors.white,
     textAlign: 'center',
     flex: 1,
   },
   
   content: {
     flex: 1,
-    padding: 20,
-    paddingTop: 20,
+    padding: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
   },
   
   profileHeader: {
@@ -363,7 +529,7 @@ const styles = StyleSheet.create({
   
   profileImageContainer: {
     position: 'relative',
-    marginBottom: 20,
+    marginBottom: theme.spacing.lg,
   },
   
   profileImage: {
@@ -371,21 +537,21 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     borderWidth: 4,
-    borderColor: '#130139',
+    borderColor: theme.colors.primary,
   },
   
   editImageButton: {
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: '#130139',
+    backgroundColor: theme.colors.primary,
     width: 36,
     height: 36,
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: '#FFFFFF',
+    borderColor: theme.colors.white,
   },
   
   editImageIcon: {
@@ -395,32 +561,28 @@ const styles = StyleSheet.create({
   },
   
   profileName: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 8,
+    fontSize: theme.fontSizes.xxxl,
+    fontWeight: theme.fontWeights.bold,
+    color: theme.colors.white,
+    marginBottom: theme.spacing.sm,
   },
   
   profileOffice: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 20,
+    fontSize: theme.fontSizes.xl,
+    color: theme.colors.textWhite + 'CC',
+    marginBottom: theme.spacing.lg,
   },
   
   profileStats: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     width: '100%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 15,
-    padding: 20,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.1,
-    shadowRadius: 15,
-    elevation: 8,
+    backgroundColor: theme.colors.white,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    ...theme.shadows.medium,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: theme.colors.borderLight,
   },
   
   statItem: {
@@ -428,15 +590,15 @@ const styles = StyleSheet.create({
   },
   
   statNumber: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#130139',
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.bold,
+    color: theme.colors.primary,
   },
   
   statLabel: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginTop: 4,
+    fontSize: theme.fontSizes.sm,
+    color: theme.colors.textSecondary,
+    marginTop: theme.spacing.xs,
   },
   
   section: {
@@ -444,178 +606,348 @@ const styles = StyleSheet.create({
   },
   
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 15,
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.semibold,
+    color: theme.colors.white,
+    marginBottom: theme.spacing.md,
   },
   
   portfoliosHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: theme.spacing.md,
   },
   
   addPortfolioButton: {
-    backgroundColor: '#130139',
+    backgroundColor: theme.colors.primary,
     width: 40,
     height: 40,
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 6,
+    ...theme.shadows.medium,
   },
   
   addPortfolioIcon: {
-    fontSize: 24,
-    color: '#FFFFFF',
-    fontWeight: '700',
+    fontSize: theme.fontSizes.xxxl,
+    color: theme.colors.white,
+    fontWeight: theme.fontWeights.bold,
   },
   
   portfolioCardContainer: {
-    width: (width - 60) / 2,
-    marginBottom: 15,
+    width: '48%',
+    marginBottom: theme.spacing.md,
   },
-  
-
   
   portfolioCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: theme.spacing.sm,
   },
   
-
-  
-
-  
   actionButton: {
-    padding: 8,
-    borderRadius: 8,
+    padding: theme.spacing.sm,
+    borderRadius: theme.borderRadius.sm,
     borderWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     minWidth: 80,
-    paddingHorizontal: 12,
-    transition: 'all 0.3s ease',
+    paddingHorizontal: theme.spacing.md,
   },
   
   actionButtonVisible: {
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    backgroundColor: theme.colors.success + '1A',
   },
   
   actionButtonHidden: {
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    backgroundColor: theme.colors.error + '1A',
     minWidth: 60,
-    paddingHorizontal: 8,
+    paddingHorizontal: theme.spacing.sm,
   },
   
-
-  
-
-  
   actionButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    transition: 'all 0.3s ease',
+    fontSize: theme.fontSizes.sm,
+    fontWeight: theme.fontWeights.semibold,
+    color: theme.colors.white,
   },
   
   actionButtonTextVisible: {
     opacity: 1,
-    transform: [{ scale: 1 }],
   },
   
   actionButtonTextHidden: {
     opacity: 0.9,
-    transform: [{ scale: 0.95 }],
   },
   
   statusDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    marginRight: 8,
+    marginRight: theme.spacing.sm,
   },
   
   statusDotPublished: {
-    backgroundColor: '#10b981',
+    backgroundColor: theme.colors.success,
   },
   
   statusDotHidden: {
-    backgroundColor: '#ef4444',
+    backgroundColor: theme.colors.error,
   },
-  
-
   
   emptyPortfolios: {
     alignItems: 'center',
     paddingVertical: 60,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 15,
+    backgroundColor: theme.colors.white,
+    borderRadius: theme.borderRadius.lg,
     padding: 30,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.1,
-    shadowRadius: 15,
-    elevation: 8,
+    ...theme.shadows.medium,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: theme.colors.borderLight,
   },
   
   emptyIcon: {
     fontSize: 64,
-    marginBottom: 20,
+    marginBottom: theme.spacing.lg,
   },
   
   emptyTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#130139',
-    marginBottom: 10,
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.semibold,
+    color: theme.colors.primary,
+    marginBottom: theme.spacing.sm,
   },
   
   emptyDescription: {
-    fontSize: 16,
-    color: '#6B7280',
+    fontSize: theme.fontSizes.xl,
+    color: theme.colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: theme.spacing.lg,
   },
   
   addFirstPortfolioButton: {
-    backgroundColor: '#130139',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 10,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 6,
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    ...theme.shadows.medium,
   },
   
   addFirstPortfolioText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+    color: theme.colors.white,
+    fontSize: theme.fontSizes.xl,
+    fontWeight: theme.fontWeights.semibold,
   },
   
   portfoliosSubtitle: {
     color: theme.colors.textSecondary,
-    fontSize: 14,
+    fontSize: theme.fontSizes.md,
     textAlign: 'center',
-    marginTop: 8,
+    marginTop: theme.spacing.sm,
     opacity: 0.8,
   },
   
   portfolioRow: {
     justifyContent: 'space-between',
+  },
+  
+  signOutSection: {
+    marginTop: 30,
+    marginBottom: 50,
+    paddingHorizontal: theme.spacing.lg,
+  },
+  
+  signOutButton: {
+    backgroundColor: theme.colors.error,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: theme.colors.white,
+    ...theme.shadows.medium,
+  },
+  
+  signOutButtonText: {
+    color: theme.colors.white,
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.semibold,
+  },
+  
+  // Loading styles
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.colors.background,
+  },
+  loadingText: {
+    fontSize: theme.fontSizes.xxl,
+    color: theme.colors.white,
+    textAlign: 'center',
+  },
+
+  subscriptionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+  },
+
+  subscriptionButton: {
+    backgroundColor: theme.colors.primary,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...theme.shadows.medium,
+  },
+
+  subscriptionButtonText: {
+    fontSize: theme.fontSizes.xxxl,
+    color: theme.colors.white,
+    fontWeight: theme.fontWeights.bold,
+  },
+
+  subscriptionCard: {
+    backgroundColor: theme.colors.white,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    ...theme.shadows.medium,
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
+  },
+
+  subscriptionInfo: {
+    marginBottom: theme.spacing.md,
+  },
+
+  subscriptionPlan: {
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.bold,
+    color: theme.colors.primary,
+    marginBottom: theme.spacing.xs,
+  },
+
+  subscriptionStatus: {
+    fontSize: theme.fontSizes.md,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.xs,
+  },
+
+  subscriptionExpiry: {
+    fontSize: theme.fontSizes.md,
+    color: theme.colors.textSecondary,
+  },
+
+  subscriptionActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+
+  subscriptionActionButton: {
+    backgroundColor: theme.colors.primary,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.borderRadius.md,
+    ...theme.shadows.medium,
+  },
+
+  subscriptionActionText: {
+    color: theme.colors.white,
+    fontSize: theme.fontSizes.md,
+    fontWeight: theme.fontWeights.semibold,
+  },
+
+  // Referans Sistemi Stilleri
+  referralHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+  },
+
+  referralButton: {
+    backgroundColor: theme.colors.success,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...theme.shadows.medium,
+  },
+
+  referralButtonText: {
+    fontSize: theme.fontSizes.xxxl,
+    color: theme.colors.white,
+    fontWeight: theme.fontWeights.bold,
+  },
+
+  referralCard: {
+    backgroundColor: theme.colors.white,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    ...theme.shadows.medium,
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
+  },
+
+  referralInfo: {
+    marginBottom: theme.spacing.md,
+  },
+
+  referralTitle: {
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.bold,
+    color: theme.colors.success,
+    marginBottom: theme.spacing.sm,
+  },
+
+  referralCodeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.success + '0A',
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.sm,
+    marginBottom: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.success + '30',
+  },
+
+  referralCode: {
+    fontSize: theme.fontSizes.xl,
+    fontWeight: theme.fontWeights.bold,
+    color: theme.colors.success,
+    flex: 1,
+    fontFamily: 'monospace',
+    letterSpacing: 1,
+  },
+
+  copyButton: {
+    backgroundColor: theme.colors.success,
+    padding: theme.spacing.sm,
+    borderRadius: theme.borderRadius.sm,
+  },
+
+  copyButtonText: {
+    color: theme.colors.white,
+    fontSize: theme.fontSizes.xl,
+    fontWeight: theme.fontWeights.semibold,
+  },
+
+  noReferralCode: {
+    fontSize: theme.fontSizes.md,
+    color: theme.colors.textSecondary,
+    fontStyle: 'italic',
+    marginBottom: theme.spacing.md,
+  },
+
+  referralDescription: {
+    fontSize: theme.fontSizes.md,
+    color: theme.colors.textSecondary,
+    lineHeight: 20,
+    textAlign: 'center',
   },
 });
 

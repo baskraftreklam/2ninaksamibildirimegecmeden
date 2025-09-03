@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Dimensions, Text, TouchableOpacity, TextInput, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, TextInput, ScrollView, Alert } from 'react-native';
 import { theme } from '../theme/theme';
-
-const { width, height } = Dimensions.get('window');
 
 const MapPicker = ({ onLocationSelect, initialPosition = null }) => {
   const [position, setPosition] = useState(

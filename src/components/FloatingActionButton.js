@@ -4,12 +4,10 @@ import {
   TouchableOpacity,
   Animated,
   StyleSheet,
-  Dimensions,
   Text,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-
-const { width } = Dimensions.get('window');
+import { theme } from '../theme/theme';
 
 const FloatingActionButton = () => {
   const navigation = useNavigation();
@@ -33,6 +31,14 @@ const FloatingActionButton = () => {
       }),
     ]).start();
   };
+
+  // Component unmount olduğunda animasyonları temizle
+  useEffect(() => {
+    return () => {
+      animation.stopAnimation();
+      scaleAnimation.stopAnimation();
+    };
+  }, [animation, scaleAnimation]);
 
   const handlePortfolioAdd = () => {
     navigation.navigate('AddPortfolio');
@@ -152,14 +158,14 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#ff0000',
-    shadowColor: '#000000',
+    backgroundColor: theme.colors.primary,
+    shadowColor: theme.colors.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
     borderWidth: 3,
-    borderColor: '#ffffff',
+    borderColor: theme.colors.white,
   },
   mainButtonInner: {
     width: '100%',
@@ -174,7 +180,7 @@ const styles = StyleSheet.create({
   },
   mainButtonText: {
     fontSize: 32,
-    color: '#ffffff',
+    color: theme.colors.white,
     fontWeight: 'bold',
   },
   actionButton: {
@@ -183,14 +189,14 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#ff0000',
-    shadowColor: '#000000',
+    backgroundColor: theme.colors.primary,
+    shadowColor: theme.colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 6,
     borderWidth: 2,
-    borderColor: '#ffffff',
+    borderColor: theme.colors.white,
   },
   actionButtonInner: {
     width: '100%',
@@ -205,13 +211,13 @@ const styles = StyleSheet.create({
   },
   actionButtonText: {
     fontSize: 20,
-    color: '#ffffff',
+    color: theme.colors.white,
   },
   portfolioButton: {
-    backgroundColor: '#ff0000',
+    backgroundColor: theme.colors.primary,
   },
   requestButton: {
-    backgroundColor: '#ff0000',
+    backgroundColor: theme.colors.primary,
   },
 });
 

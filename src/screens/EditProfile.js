@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   TextInput,
   StyleSheet,
-  Dimensions,
   Alert,
   Animated,
   Image,
@@ -14,8 +13,6 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { theme } from '../theme/theme';
-
-const { width, height } = Dimensions.get('window');
 
 // Türkiye şehirleri
 const turkishCities = [
@@ -231,7 +228,7 @@ const EditProfile = () => {
   };
 
   const getAvatarUrl = (name) => {
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=ff0000&color=fff&size=200`;
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${encodeURIComponent(theme.colors.primary)}&color=fff&size=200`;
   };
 
   const renderSuccessModal = () => (
@@ -447,7 +444,7 @@ const EditProfile = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.primary,
   },
   header: {
     flexDirection: 'row',
@@ -457,19 +454,20 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.md,
     paddingTop: 50,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    borderBottomColor: theme.colors.borderLight,
+    backgroundColor: theme.colors.primary,
   },
   backButton: {
     padding: theme.spacing.sm,
   },
   backIcon: {
     fontSize: 24,
-    color: theme.colors.text,
+    color: theme.colors.textWhite,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: theme.colors.text,
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.bold,
+    color: theme.colors.textWhite,
   },
   placeholder: {
     width: 40,
@@ -477,18 +475,20 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: theme.spacing.lg,
+    paddingTop: theme.spacing.md,
   },
   section: {
     marginBottom: theme.spacing.xl,
+    marginHorizontal: theme.spacing.sm,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.text,
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.semibold,
+    color: theme.colors.textWhite,
     marginBottom: theme.spacing.md,
   },
   sectionDescription: {
-    fontSize: 14,
+    fontSize: theme.fontSizes.xl,
     color: theme.colors.textSecondary,
     marginBottom: theme.spacing.lg,
     lineHeight: 20,
@@ -499,7 +499,8 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.lg,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: theme.colors.borderLight,
+    ...theme.shadows.medium,
   },
   profileImage: {
     width: 100,
@@ -517,36 +518,38 @@ const styles = StyleSheet.create({
   },
   changeImageText: {
     color: theme.colors.white,
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: theme.fontSizes.xl,
+    fontWeight: theme.fontWeights.semibold,
   },
   inputContainer: {
     marginBottom: theme.spacing.lg,
   },
   inputLabel: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: theme.fontSizes.xl,
+    fontWeight: theme.fontWeights.semibold,
     color: theme.colors.text,
     marginBottom: theme.spacing.sm,
   },
   input: {
     backgroundColor: theme.colors.inputBg,
     borderWidth: 1,
-    borderColor: theme.colors.inputBorder,
+    borderColor: theme.colors.borderLight,
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.md,
     color: theme.colors.text,
-    fontSize: 16,
+    fontSize: theme.fontSizes.xl,
+    ...theme.shadows.small,
   },
   pickerButton: {
     backgroundColor: theme.colors.inputBg,
     borderWidth: 1,
-    borderColor: theme.colors.inputBorder,
+    borderColor: theme.colors.borderLight,
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.md,
+    ...theme.shadows.small,
   },
   pickerButtonText: {
-    fontSize: 16,
+    fontSize: theme.fontSizes.xl,
     color: theme.colors.text,
   },
   saveButton: {
@@ -555,48 +558,50 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
     alignItems: 'center',
     marginBottom: theme.spacing.xl,
+    ...theme.shadows.medium,
   },
   saveButtonDisabled: {
     opacity: 0.6,
   },
   saveButtonText: {
     color: theme.colors.white,
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.semibold,
   },
   dangerSection: {
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    backgroundColor: theme.colors.error + '10',
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.lg,
     borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.3)',
+    borderColor: theme.colors.error + '30',
+    ...theme.shadows.medium,
   },
   dangerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#ef4444',
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.semibold,
+    color: theme.colors.error,
     marginBottom: theme.spacing.sm,
   },
   dangerDescription: {
-    fontSize: 14,
+    fontSize: theme.fontSizes.xl,
     color: theme.colors.textSecondary,
     marginBottom: theme.spacing.lg,
     lineHeight: 20,
   },
   deleteAccountButton: {
-    backgroundColor: '#ef4444',
+    backgroundColor: theme.colors.error,
     paddingVertical: theme.spacing.md,
     borderRadius: theme.borderRadius.md,
     alignItems: 'center',
   },
   deleteAccountText: {
     color: theme.colors.white,
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: theme.fontSizes.xl,
+    fontWeight: theme.fontWeights.semibold,
   },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: theme.colors.overlay,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -607,13 +612,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: theme.spacing.lg,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: theme.colors.borderLight,
+    ...theme.shadows.large,
   },
   successIcon: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#10b981',
+    backgroundColor: theme.colors.success,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: theme.spacing.lg,
@@ -621,16 +627,16 @@ const styles = StyleSheet.create({
   successIconText: {
     fontSize: 40,
     color: theme.colors.white,
-    fontWeight: 'bold',
+    fontWeight: theme.fontWeights.bold,
   },
   modalTitle: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontSize: theme.fontSizes.xxxl,
+    fontWeight: theme.fontWeights.bold,
     color: theme.colors.text,
     marginBottom: theme.spacing.md,
   },
   modalMessage: {
-    fontSize: 16,
+    fontSize: theme.fontSizes.xl,
     color: theme.colors.textSecondary,
     textAlign: 'center',
     lineHeight: 24,

@@ -1,27 +1,50 @@
 // src/components/FilterPill.js
 import React from 'react';
-import { Text, TouchableOpacity } from 'react-native';
+import { Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { theme } from '../theme/theme';
 
 export default function FilterPill({ label, active, onPress }) {
   return (
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.9}
-      style={{
-        minWidth: 90,
-        alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 10,
-        marginRight: 12,
-        borderRadius: 18,
-        backgroundColor: active ? '#e11d2e' : '#2a3440',
-        borderWidth: active ? 0 : 1,
-        borderColor: 'rgba(255,255,255,0.10)',
-      }}
+      style={[
+        styles.container,
+        active && styles.containerActive
+      ]}
     >
-      <Text style={{ color: active ? '#fff' : '#d6dee5', fontWeight: '700', fontSize: 13 }}>
-        <Text>{label}</Text>
+      <Text style={[
+        styles.text,
+        active && styles.textActive
+      ]}>
+        {label}
       </Text>
     </TouchableOpacity>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    minWidth: 90,
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginRight: 12,
+    borderRadius: 18,
+    backgroundColor: theme.colors.cardBg,
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
+  },
+  containerActive: {
+    backgroundColor: theme.colors.primary,
+    borderWidth: 0,
+  },
+  text: {
+    color: theme.colors.textSecondary,
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  textActive: {
+    color: theme.colors.white,
+  },
+});

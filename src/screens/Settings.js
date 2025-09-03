@@ -1,49 +1,34 @@
 // src/screens/Settings.js
 // Talepify - Ayarlar Sayfası
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  Dimensions,
   Alert,
   Animated,
-  Switch,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../theme/theme';
 
-const { width, height } = Dimensions.get('window');
+
 
 const Settings = () => {
   const navigation = useNavigation();
   const [fadeAnim] = useState(new Animated.Value(0));
-  const [slideAnim] = useState(new Animated.Value(50));
 
-  // Settings state
-  const [notifications, setNotifications] = useState(true);
-  const [darkMode, setDarkMode] = useState(true);
-  const [autoSave, setAutoSave] = useState(true);
-  const [locationServices, setLocationServices] = useState(true);
+
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.spring(slideAnim, {
-        toValue: 0,
-        tension: 80,
-        friction: 8,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [fadeAnim, slideAnim]);
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 800,
+      useNativeDriver: true,
+    }).start();
+  }, [fadeAnim]);
 
   const handleLogout = () => {
     Alert.alert(
@@ -92,7 +77,6 @@ const Settings = () => {
     <TouchableOpacity
       style={[styles.settingItem, isDestructive && styles.destructiveItem]}
       onPress={onPress}
-      disabled={type === 'switch'}
     >
       <View style={styles.settingItemLeft}>
         <Text style={styles.settingIcon}>{icon}</Text>
@@ -109,14 +93,7 @@ const Settings = () => {
       </View>
       
       <View style={styles.settingItemRight}>
-        {type === 'switch' ? (
-          <Switch
-            value={value}
-            onValueChange={onValueChange}
-            trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
-            thumbColor={value ? theme.colors.white : theme.colors.textSecondary}
-          />
-        ) : type === 'arrow' ? (
+        {type === 'arrow' ? (
           <Text style={styles.settingArrow}>→</Text>
         ) : (
           <Text style={[styles.settingValue, isDestructive && styles.destructiveText]}>
@@ -149,17 +126,15 @@ const Settings = () => {
           icon: '🔔',
           title: 'Push Bildirimleri',
           subtitle: 'Yeni mesaj ve güncellemeler için',
-          type: 'switch',
-          value: notifications,
-          onValueChange: setNotifications,
+          type: 'arrow',
+          onPress: () => Alert.alert('Push Bildirimleri', 'Bildirim ayarları yakında gelecek'),
         },
         {
           icon: '📧',
           title: 'E-posta Bildirimleri',
           subtitle: 'Önemli güncellemeler için',
-          type: 'switch',
-          value: notifications,
-          onValueChange: setNotifications,
+          type: 'arrow',
+          onPress: () => Alert.alert('E-posta Bildirimleri', 'E-posta bildirim ayarları yakında gelecek'),
         },
       ],
     },
@@ -170,9 +145,8 @@ const Settings = () => {
           icon: '🌙',
           title: 'Karanlık Mod',
           subtitle: 'Koyu tema kullan',
-          type: 'switch',
-          value: darkMode,
-          onValueChange: setDarkMode,
+          type: 'arrow',
+          onPress: () => Alert.alert('Karanlık Mod', 'Karanlık mod özelliği yakında gelecek'),
         },
         {
           icon: '🎨',
@@ -190,17 +164,15 @@ const Settings = () => {
           icon: '💾',
           title: 'Otomatik Kaydet',
           subtitle: 'Değişiklikleri otomatik kaydet',
-          type: 'switch',
-          value: autoSave,
-          onValueChange: setAutoSave,
+          type: 'arrow',
+          onPress: () => Alert.alert('Otomatik Kaydet', 'Otomatik kaydetme özelliği yakında gelecek'),
         },
         {
           icon: '📍',
           title: 'Konum Servisleri',
           subtitle: 'Yakındaki portföyleri göster',
-          type: 'switch',
-          value: locationServices,
-          onValueChange: setLocationServices,
+          type: 'arrow',
+          onPress: () => Alert.alert('Konum Servisleri', 'Konum servisleri özelliği yakında gelecek'),
         },
         {
           icon: '📱',
@@ -218,7 +190,7 @@ const Settings = () => {
           title: 'Profil Düzenle',
           subtitle: 'Kişisel bilgilerinizi güncelleyin',
           type: 'arrow',
-          onPress: () => navigation.navigate('EditProfile'),
+          onPress: () => navigation.navigate('MainTabs', { screen: 'Profil', params: { screen: 'EditProfile' } }),
         },
         {
           icon: '🔒',
@@ -286,7 +258,6 @@ const Settings = () => {
         <Animated.View
           style={{
             opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }],
           }}
         >
           {settingsData.map((section, index) => (
@@ -304,17 +275,18 @@ const Settings = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.primary,
   },
   header: {
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.md,
     paddingTop: 50,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    borderBottomColor: theme.colors.borderLight,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    backgroundColor: theme.colors.primary,
   },
   backButton: {
     width: 40,
@@ -324,13 +296,13 @@ const styles = StyleSheet.create({
   },
   backButtonIcon: {
     fontSize: 24,
-    color: theme.colors.text,
-    fontWeight: 'bold',
+    color: theme.colors.textWhite,
+    fontWeight: theme.fontWeights.bold,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: theme.colors.text,
+    fontSize: theme.fontSizes.xxxl,
+    fontWeight: theme.fontWeights.bold,
+    color: theme.colors.textWhite,
     textAlign: 'center',
     flex: 1,
   },
@@ -340,23 +312,25 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: theme.spacing.lg,
+    paddingTop: theme.spacing.md,
   },
   section: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.xl,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.text,
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.semibold,
+    color: theme.colors.textWhite,
     marginBottom: theme.spacing.md,
-    paddingHorizontal: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
   },
   sectionCard: {
     backgroundColor: theme.colors.cardBg,
     borderRadius: theme.borderRadius.lg,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: theme.colors.borderLight,
     overflow: 'hidden',
+    ...theme.shadows.medium,
   },
   settingItem: {
     flexDirection: 'row',
@@ -380,36 +354,37 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   settingTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: theme.fontSizes.xl,
+    fontWeight: theme.fontWeights.semibold,
     color: theme.colors.text,
     marginBottom: 2,
   },
   settingSubtitle: {
-    fontSize: 14,
+    fontSize: theme.fontSizes.md,
     color: theme.colors.textSecondary,
+    opacity: 0.8,
   },
   destructiveText: {
-    color: '#ef4444',
+    color: theme.colors.error,
   },
   destructiveSubtitle: {
-    color: 'rgba(239, 68, 68, 0.7)',
+    color: theme.colors.error + '80',
   },
   settingItemRight: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   settingValue: {
-    fontSize: 14,
+    fontSize: theme.fontSizes.md,
     color: theme.colors.textSecondary,
   },
   settingArrow: {
-    fontSize: 18,
-    color: theme.colors.textSecondary,
+    fontSize: theme.fontSizes.xl,
+    color: theme.colors.primary,
   },
   separator: {
     height: 1,
-    backgroundColor: theme.colors.border,
+    backgroundColor: theme.colors.borderLight,
     marginHorizontal: theme.spacing.lg,
   },
   sectionSpacer: {

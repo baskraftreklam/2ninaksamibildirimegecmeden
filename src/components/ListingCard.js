@@ -44,10 +44,6 @@ const ListingCard = ({
     return `₺${price.toLocaleString()}`;
   };
 
-
-
-
-
   return (
     <TouchableOpacity 
       style={[
@@ -170,7 +166,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'rgba(255, 0, 0, 0.4)',
   },
-  
 
   imageContainer: {
     position: 'relative',
@@ -191,29 +186,6 @@ const styles = StyleSheet.create({
     fontSize: 48,
     color: theme.colors.textSecondary,
   },
-  statusBadge: {
-    position: 'absolute',
-    top: theme.spacing.sm,
-    left: theme.spacing.sm,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: 4,
-    borderRadius: theme.borderRadius.sm,
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 6,
-  },
-  statusText: {
-    color: theme.colors.white,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  
 
   actionButtons: {
     position: 'absolute',

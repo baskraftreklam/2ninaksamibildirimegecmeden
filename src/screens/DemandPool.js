@@ -5,8 +5,6 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
-  Dimensions,
-  ActivityIndicator,
   Image,
   Alert,
 } from 'react-native';
@@ -14,8 +12,6 @@ import { useNavigation } from '@react-navigation/native';
 import { theme } from '../theme/theme';
 import { makePhoneCall, sendWhatsAppMessage, sendEmail } from '../utils/contactUtils';
 import { fetchRequests } from '../services/firestore';
-
-const { width, height } = Dimensions.get('window');
 
 const DemandPool = () => {
   const navigation = useNavigation();
@@ -26,7 +22,7 @@ const DemandPool = () => {
   // Load published requests on component mount
   useEffect(() => {
     loadRequests();
-  }, []);
+  }, [loadRequests]);
 
   const loadRequests = useCallback(async () => {
     try {
@@ -160,6 +156,47 @@ const DemandPool = () => {
     </TouchableOpacity>
   );
 
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <Text style={styles.headerTitle}>Talep Havuzu</Text>
+      <Text style={styles.headerSubtitle}>
+        Müşterilerinizin aradığı portföyleri görün
+      </Text>
+    </View>
+  );
+
+  const renderFilters = () => (
+    <View style={styles.filterContainer}>
+      {renderFilterButton('all', 'Tümü')}
+      {renderFilterButton('active', 'Aktif')}
+      {renderFilterButton('pending', 'Bekleyen')}
+      {renderFilterButton('completed', 'Tamamlanan')}
+    </View>
+  );
+
+  const renderSkeletonCard = (index) => (
+    <View key={index} style={styles.skeletonCard}>
+      <View style={styles.skeletonHeader}>
+        <View style={styles.skeletonTitle} />
+        <View style={styles.skeletonBadge} />
+      </View>
+      <View style={styles.skeletonDescription} />
+      <View style={styles.skeletonDetails}>
+        <View style={styles.skeletonDetailRow} />
+        <View style={styles.skeletonDetailRow} />
+        <View style={styles.skeletonDetailRow} />
+      </View>
+      <View style={styles.skeletonFooter}>
+        <View style={styles.skeletonDate} />
+        <View style={styles.skeletonButtons}>
+          <View style={styles.skeletonButton} />
+          <View style={styles.skeletonButton} />
+          <View style={styles.skeletonButton} />
+        </View>
+      </View>
+    </View>
+  );
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -168,44 +205,12 @@ const DemandPool = () => {
           <Image source={require('../assets/images/dark-bg.jpg')} style={styles.backgroundImage} />
         </View>
         
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Talep Havuzu</Text>
-          <Text style={styles.headerSubtitle}>
-            Müşterilerinizin aradığı portföyleri görün
-          </Text>
-        </View>
-
-        <View style={styles.filterContainer}>
-          {renderFilterButton('all', 'Tümü')}
-          {renderFilterButton('active', 'Aktif')}
-          {renderFilterButton('pending', 'Bekleyen')}
-          {renderFilterButton('completed', 'Tamamlanan')}
-        </View>
+        {renderHeader()}
+        {renderFilters()}
 
         <View style={styles.listContainer}>
           {/* Skeleton Loading Cards */}
-          {[1, 2, 3].map((index) => (
-            <View key={index} style={styles.skeletonCard}>
-              <View style={styles.skeletonHeader}>
-                <View style={styles.skeletonTitle} />
-                <View style={styles.skeletonBadge} />
-              </View>
-              <View style={styles.skeletonDescription} />
-              <View style={styles.skeletonDetails}>
-                <View style={styles.skeletonDetailRow} />
-                <View style={styles.skeletonDetailRow} />
-                <View style={styles.skeletonDetailRow} />
-              </View>
-              <View style={styles.skeletonFooter}>
-                <View style={styles.skeletonDate} />
-                <View style={styles.skeletonButtons}>
-                  <View style={styles.skeletonButton} />
-                  <View style={styles.skeletonButton} />
-                  <View style={styles.skeletonButton} />
-                </View>
-              </View>
-            </View>
-          ))}
+          {[1, 2, 3].map(renderSkeletonCard)}
         </View>
       </View>
     );
@@ -218,19 +223,8 @@ const DemandPool = () => {
         <Image source={require('../assets/images/dark-bg.jpg')} style={styles.backgroundImage} />
       </View>
       
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Talep Havuzu</Text>
-        <Text style={styles.headerSubtitle}>
-          Müşterilerinizin aradığı portföyleri görün
-        </Text>
-      </View>
-
-      <View style={styles.filterContainer}>
-        {renderFilterButton('all', 'Tümü')}
-        {renderFilterButton('active', 'Aktif')}
-        {renderFilterButton('pending', 'Bekleyen')}
-        {renderFilterButton('completed', 'Tamamlanan')}
-      </View>
+      {renderHeader()}
+      {renderFilters()}
 
       <FlatList
         data={filteredRequests}
@@ -272,152 +266,126 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
   
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'transparent',
-  },
-  
-  loadingText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    marginTop: 16,
-    fontWeight: '500',
-  },
-  
   header: {
-    padding: 30,
-    paddingBottom: 20,
+    padding: theme.spacing.xxl,
+    paddingBottom: theme.spacing.lg,
     paddingTop: 50,
-    backgroundColor: 'rgba(19, 1, 57, 0.95)', // Daha belirgin koyu mor container
-    borderRadius: 15,
-    marginHorizontal: 20,
-    marginBottom: 20,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.4,
-    shadowRadius: 25,
-    elevation: 20,
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.lg,
+    marginHorizontal: theme.spacing.lg,
+    marginBottom: theme.spacing.lg,
+    ...theme.shadows.large,
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
+    borderColor: theme.colors.borderLight,
   },
   
   headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#FFFFFF', // Beyaz metin
-    marginBottom: 8,
+    fontSize: theme.fontSizes.xxxl,
+    fontWeight: theme.fontWeights.bold,
+    color: theme.colors.white,
+    marginBottom: theme.spacing.sm,
     textAlign: 'center',
   },
   
   headerSubtitle: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)', // Şeffaf beyaz
+    fontSize: theme.fontSizes.xxl,
+    color: theme.colors.textWhite,
     textAlign: 'center',
   },
   
   filterContainer: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    gap: 12,
-    backgroundColor: 'rgba(19, 1, 57, 0.95)', // Daha belirgin koyu mor container
-    borderRadius: 15,
-    marginHorizontal: 20,
-    marginBottom: 20,
-    padding: 20,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.4,
-    shadowRadius: 25,
-    elevation: 20,
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing.lg,
+    gap: theme.spacing.md,
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.lg,
+    marginHorizontal: theme.spacing.lg,
+    marginBottom: theme.spacing.lg,
+    padding: theme.spacing.lg,
+    ...theme.shadows.large,
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
+    borderColor: theme.colors.borderLight,
   },
   
   filterButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)', // Şeffaf beyaz
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.primaryLight,
     borderWidth: 1,
-    borderColor: '#ffffff', // Beyaz border
+    borderColor: theme.colors.white,
     flex: 1,
   },
   
   filterButtonActive: {
-    backgroundColor: '#ffffff', // Beyaz arka plan
-    borderColor: '#ffffff',
+    backgroundColor: theme.colors.white,
+    borderColor: theme.colors.white,
   },
   
   filterButtonText: {
-    color: '#ffffff', // Beyaz yazı
-    fontSize: 14,
-    fontWeight: '600',
+    color: theme.colors.white,
+    fontSize: theme.fontSizes.xl,
+    fontWeight: theme.fontWeights.semibold,
     textAlign: 'center',
   },
   
   filterButtonTextActive: {
-    color: '#130139', // Koyu mor yazı
+    color: theme.colors.primary,
   },
   
   listContainer: {
-    padding: 20,
+    padding: theme.spacing.lg,
     paddingTop: 0,
   },
   
   requestCard: {
-    backgroundColor: '#FFFFFF', // Anasayfadaki beyaz kart rengi
-    borderRadius: Math.min(width * 0.05, 15), // Anasayfadaki border radius
-    padding: 20,
-    marginBottom: 16,
+    backgroundColor: theme.colors.cardBg,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
     borderWidth: 2,
-    borderColor: 'rgba(19, 1, 57, 0.3)', // Daha belirgin koyu mor border
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 12,
+    borderColor: theme.colors.border,
+    ...theme.shadows.medium,
   },
   
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 12,
+    marginBottom: theme.spacing.md,
   },
   
   requestTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#130139', // Anasayfadaki koyu mor metin rengi
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.semibold,
+    color: theme.colors.text,
     flex: 1,
-    marginRight: 12,
+    marginRight: theme.spacing.md,
   },
   
   statusBadge: {
-    backgroundColor: '#130139', // Anasayfadaki koyu mor
-    paddingHorizontal: 12,
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: theme.spacing.md,
     paddingVertical: 4,
-    borderRadius: 4,
+    borderRadius: theme.borderRadius.sm,
   },
   
   statusText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
+    color: theme.colors.white,
+    fontSize: theme.fontSizes.md,
+    fontWeight: theme.fontWeights.semibold,
   },
   
   requestDescription: {
-    fontSize: 14,
-    color: '#374151', // Anasayfadaki gri metin rengi
-    marginBottom: 16,
+    fontSize: theme.fontSizes.xl,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.md,
     lineHeight: 20,
   },
   
   requestDetails: {
-    marginBottom: 16,
+    marginBottom: theme.spacing.md,
   },
   
   detailRow: {
@@ -427,92 +395,88 @@ const styles = StyleSheet.create({
   },
   
   detailLabel: {
-    fontSize: 14,
-    color: '#374151', // Anasayfadaki gri metin rengi
-    fontWeight: '500',
+    fontSize: theme.fontSizes.xl,
+    color: theme.colors.textSecondary,
+    fontWeight: theme.fontWeights.medium,
   },
   
   detailValue: {
-    fontSize: 14,
-    color: '#130139', // Anasayfadaki koyu mor
-    fontWeight: '600',
+    fontSize: theme.fontSizes.xl,
+    color: theme.colors.text,
+    fontWeight: theme.fontWeights.semibold,
   },
   
   cardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 16,
+    paddingTop: theme.spacing.md,
     borderTopWidth: 2,
-    borderTopColor: 'rgba(19, 1, 57, 0.2)', // Daha belirgin koyu mor border
+    borderTopColor: theme.colors.border,
   },
   
   dateText: {
-    fontSize: 12,
-    color: '#374151', // Anasayfadaki gri metin rengi
+    fontSize: theme.fontSizes.md,
+    color: theme.colors.textSecondary,
   },
   
   contactButtons: {
     flexDirection: 'row',
-    gap: 12,
+    gap: theme.spacing.md,
   },
   
   phoneButton: {
     flex: 1,
-    backgroundColor: '#130139', // Anasayfadaki koyu mor
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: theme.colors.primary,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
     alignItems: 'center',
   },
   
   phoneButtonText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
+    color: theme.colors.white,
+    fontSize: theme.fontSizes.md,
+    fontWeight: theme.fontWeights.semibold,
   },
   
   whatsappButton: {
     flex: 1,
-    backgroundColor: '#25D366',
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: theme.colors.info,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
     alignItems: 'center',
   },
   
   whatsappButtonText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
+    color: theme.colors.white,
+    fontSize: theme.fontSizes.md,
+    fontWeight: theme.fontWeights.semibold,
   },
   
   emailButton: {
     flex: 1,
-    backgroundColor: '#130139', // Anasayfadaki koyu mor
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: theme.colors.primary,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
     alignItems: 'center',
   },
   
   emailButtonText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
+    color: theme.colors.white,
+    fontSize: theme.fontSizes.md,
+    fontWeight: theme.fontWeights.semibold,
   },
   
   emptyContainer: {
     alignItems: 'center',
     paddingVertical: 60,
-    backgroundColor: 'rgba(19, 1, 57, 0.95)', // Daha belirgin koyu mor container
-    borderRadius: 15,
-    padding: 30,
-    marginTop: 20,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.4,
-    shadowRadius: 25,
-    elevation: 20,
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.xxl,
+    marginTop: theme.spacing.lg,
+    ...theme.shadows.large,
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
+    borderColor: theme.colors.borderLight,
   },
   
   emptyIcon: {
@@ -521,71 +485,67 @@ const styles = StyleSheet.create({
   },
   
   emptyText: {
-    fontSize: 18,
-    color: '#FFFFFF', // Beyaz metin
-    marginBottom: 8,
-    fontWeight: '600',
+    fontSize: theme.fontSizes.xxl,
+    color: theme.colors.white,
+    marginBottom: theme.spacing.sm,
+    fontWeight: theme.fontWeights.semibold,
     textAlign: 'center',
   },
   
   emptySubtext: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)', // Şeffaf beyaz
+    fontSize: theme.fontSizes.xl,
+    color: theme.colors.textWhite,
     textAlign: 'center',
   },
 
   // Skeleton Loading Styles
   skeletonCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: Math.min(width * 0.05, 15),
-    padding: 20,
-    marginBottom: 16,
+    backgroundColor: theme.colors.cardBg,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
     borderWidth: 2,
-    borderColor: 'rgba(19, 1, 57, 0.3)',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 12,
+    borderColor: theme.colors.border,
+    ...theme.shadows.medium,
   },
 
   skeletonHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 12,
+    marginBottom: theme.spacing.md,
   },
 
   skeletonTitle: {
     height: 20,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 4,
+    backgroundColor: theme.colors.progressBg,
+    borderRadius: theme.borderRadius.sm,
     flex: 1,
-    marginRight: 12,
+    marginRight: theme.spacing.md,
   },
 
   skeletonBadge: {
     width: 60,
     height: 24,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 4,
+    backgroundColor: theme.colors.progressBg,
+    borderRadius: theme.borderRadius.sm,
   },
 
   skeletonDescription: {
     height: 16,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 4,
-    marginBottom: 16,
+    backgroundColor: theme.colors.progressBg,
+    borderRadius: theme.borderRadius.sm,
+    marginBottom: theme.spacing.md,
   },
 
   skeletonDetails: {
-    marginBottom: 16,
+    marginBottom: theme.spacing.md,
   },
 
   skeletonDetailRow: {
     height: 14,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 4,
+    backgroundColor: theme.colors.progressBg,
+    borderRadius: theme.borderRadius.sm,
     marginBottom: 4,
   },
 
@@ -593,28 +553,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 16,
+    paddingTop: theme.spacing.md,
     borderTopWidth: 2,
-    borderTopColor: 'rgba(19, 1, 57, 0.2)',
+    borderTopColor: theme.colors.border,
   },
 
   skeletonDate: {
     width: 80,
     height: 12,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 4,
+    backgroundColor: theme.colors.progressBg,
+    borderRadius: theme.borderRadius.sm,
   },
 
   skeletonButtons: {
     flexDirection: 'row',
-    gap: 12,
+    gap: theme.spacing.md,
   },
 
   skeletonButton: {
     flex: 1,
     height: 36,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 8,
+    backgroundColor: theme.colors.progressBg,
+    borderRadius: theme.borderRadius.md,
   },
 });
 

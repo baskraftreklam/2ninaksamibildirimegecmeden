@@ -5,20 +5,16 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  Dimensions,
   Alert,
   Animated,
   Modal,
   FlatList,
-  Image,
   ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { theme } from '../theme/theme';
-import { fetchUserRequests, toggleRequestPublishStatus } from '../services/firestore';
-
-const { width, height } = Dimensions.get('window');
+import { fetchUserRequests } from '../services/firestore';
 
 const RequestList = () => {
   const navigation = useNavigation();
@@ -29,7 +25,6 @@ const RequestList = () => {
   const [expandedRequest, setExpandedRequest] = useState(null);
   const [favorites, setFavorites] = useState([]);
   const [showFavorites, setShowFavorites] = useState(false);
-  const [showMatchingPortfolios, setShowMatchingPortfolios] = useState(false);
   const [hiddenRequests, setHiddenRequests] = useState([]);
   const [showHidden, setShowHidden] = useState(false);
   const [requests, setRequests] = useState([]);
@@ -37,19 +32,24 @@ const RequestList = () => {
 
   // Load user requests on component mount
   useEffect(() => {
-    if (user) {
+    if (user && user.uid) {
       loadUserRequests();
+    } else {
+      setLoading(false);
     }
   }, [user, loadUserRequests]);
 
   const loadUserRequests = useCallback(async () => {
+    if (!user || !user.uid) {
+      return;
+    }
+    
     try {
       setLoading(true);
       const data = await fetchUserRequests(user.uid);
       setRequests(data);
-      console.log('[RequestList] user requests loaded:', data.length);
     } catch (error) {
-      console.error('Error loading user requests:', error);
+      console.error('[RequestList] Error loading user requests:', error);
       Alert.alert('Hata', 'Talepler yüklenirken bir hata oluştu.');
     } finally {
       setLoading(false);
@@ -270,19 +270,7 @@ const RequestList = () => {
             </Text>
           </View>
           
-          {request.matchingPortfolios > 0 && (
-            <TouchableOpacity
-              style={styles.matchingButton}
-              onPress={() => {
-                setShowMatchingPortfolios(true);
-                setSelectedRequest(request);
-              }}
-            >
-              <Text style={styles.matchingButtonText}>
-                🏠 {request.matchingPortfolios} Eşleşen Portföyünüz Bulundu
-              </Text>
-            </TouchableOpacity>
-          )}
+
         </View>
       </Animated.View>
     );
@@ -295,10 +283,7 @@ const RequestList = () => {
         style={styles.headerButtonBack}
         onPress={() => navigation.goBack()}
       >
-        <Image 
-          source={require('../assets/images/icons/return.png')} 
-          style={styles.headerButtonIconBack}
-        />
+        <Text style={styles.headerButtonIconBack}>←</Text>
       </TouchableOpacity>
 
       {/* Orta: Başlık ve Alt Başlık */}
@@ -372,10 +357,10 @@ const RequestList = () => {
 
   return (
     <View style={styles.container}>
-      {/* Arka Plan - Resim + %70 opak koyu mor */}
-      <View style={styles.backgroundContainer}>
-        <Image source={require('../assets/images/dark-bg.jpg')} style={styles.backgroundImage} />
-      </View>
+      {/* Arka Plan - Koyu mor katman */}
+      <View style={styles.backgroundContainer} />
+
+
 
       {loading ? (
         <View style={styles.loadingContainer}>
@@ -394,52 +379,7 @@ const RequestList = () => {
         />
       )}
 
-      {/* Eşleşen Portföyler Modal */}
-      <Modal
-        visible={showMatchingPortfolios}
-        animationType="slide"
-        presentationStyle="pageSheet"
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Eşleşen Portföyler</Text>
-            <TouchableOpacity onPress={() => setShowMatchingPortfolios(false)}>
-              <Text style={styles.closeButton}>✕</Text>
-            </TouchableOpacity>
-          </View>
-          
-          <ScrollView style={styles.modalContent}>
-            <Text style={styles.modalSubtitle}>
-              {selectedRequest?.clientName} için uygun portföyleriniz:
-            </Text>
-            
-            {/* Mock eşleşen portföyler */}
-            <View style={styles.matchingPortfolioCard}>
-              <Text style={styles.portfolioTitle}>Atakent Satılık Daire</Text>
-              <Text style={styles.portfolioDetails}>2+1 • 95m² • 2.300.000 ₺</Text>
-              <TouchableOpacity style={styles.viewPortfolioButton}>
-                <Text style={styles.viewPortfolioText}>Portföyü Görüntüle</Text>
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.matchingPortfolioCard}>
-              <Text style={styles.portfolioTitle}>Güzelyalı Satılık Daire</Text>
-              <Text style={styles.portfolioDetails}>2+1 • 110m² • 2.450.000 ₺</Text>
-              <TouchableOpacity style={styles.viewPortfolioButton}>
-                <Text style={styles.viewPortfolioText}>Portföyü Görüntüle</Text>
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.matchingPortfolioCard}>
-              <Text style={styles.portfolioTitle}>Cumhuriyet Satılık Daire</Text>
-              <Text style={styles.portfolioDetails}>2+1 • 85m² • 2.100.000 ₺</Text>
-              <TouchableOpacity style={styles.viewPortfolioButton}>
-                <Text style={styles.viewPortfolioText}>Portföyü Görüntüle</Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-        </View>
-      </Modal>
+
 
       {/* Detay Modal */}
       <Modal
@@ -496,7 +436,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   
-  // Arka Plan - Resim + %70 opak koyu mor katman
+  // Arka Plan - Koyu mor katman
   backgroundContainer: {
     position: 'absolute',
     top: 0,
@@ -506,114 +446,109 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(19, 1, 57, 0.7)', // %70 opak koyu mor katman
   },
   
-  backgroundImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.xl,
+    margin: theme.spacing.lg,
+    padding: theme.spacing.xl,
   },
   loadingText: {
-    marginTop: 10,
+    marginTop: theme.spacing.sm,
     color: theme.colors.textSecondary,
-    fontSize: 16,
+    fontSize: theme.fontSizes.lg,
   },
 
   
 
   listContainer: {
-    padding: 16,
+    padding: theme.spacing.lg,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 24,
-    paddingHorizontal: 20,
+    marginBottom: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: 50,
+    paddingBottom: theme.spacing.lg,
+    backgroundColor: theme.colors.surface,
+    borderBottomLeftRadius: theme.borderRadius.xl,
+    borderBottomRightRadius: theme.borderRadius.xl,
+    ...theme.shadows.medium,
   },
   headerButtonBack: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.colors.white,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderColor: theme.colors.borderLight,
+    ...theme.shadows.small,
   },
   headerButtonIconBack: {
-    width: 20,
-    height: 20,
-    resizeMode: 'contain',
-    tintColor: '#130139',
+    fontSize: theme.fontSizes.xxl,
+    color: theme.colors.primary,
+    fontWeight: theme.fontWeights.bold,
   },
   headerContent: {
     flex: 1,
     alignItems: 'center',
-    marginBottom: 24,
-    marginHorizontal: 20,
+    marginBottom: theme.spacing.lg,
+    marginHorizontal: theme.spacing.lg,
   },
   mainTitle: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: theme.colors.text,
+    fontSize: theme.fontSizes.xxxl,
+    fontWeight: theme.fontWeights.bold,
+    color: theme.colors.white,
     letterSpacing: 1,
   },
   mainSubtitle: {
-    fontSize: 16,
-    color: '#FFFFFF',
+    fontSize: theme.fontSizes.md,
+    color: theme.colors.textWhite,
     opacity: 0.8,
     textAlign: 'center',
-    marginTop: 4,
+    marginTop: theme.spacing.xs,
   },
   headerButtons: {
     flexDirection: 'row',
-    gap: 8,
     alignItems: 'center',
   },
   headerButton: {
-    backgroundColor: 'rgba(255, 0, 0, 0.1)',
+    backgroundColor: theme.colors.primaryLight,
     borderWidth: 1,
-    borderColor: '#ff0000',
-    borderRadius: 8,
+    borderColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.md,
     width: 40,
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
+    marginLeft: theme.spacing.sm,
   },
   headerButtonActive: {
-    backgroundColor: '#ff0000',
+    backgroundColor: theme.colors.primary,
   },
   headerButtonIcon: {
-    fontSize: 18,
+    fontSize: theme.fontSizes.xl,
+    color: theme.colors.primary,
   },
   requestCard: {
-    backgroundColor: '#FFFFFF', // Anasayfadaki beyaz kart rengi
-    borderRadius: Math.min(width * 0.05, 15), // Anasayfadaki border radius
-    marginBottom: 16,
+    backgroundColor: theme.colors.cardBg,
+    borderRadius: theme.borderRadius.lg,
+    marginBottom: theme.spacing.lg,
     borderWidth: 2,
-    borderColor: 'rgba(19, 1, 57, 0.3)', // Daha belirgin koyu mor border
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 12,
+    borderColor: theme.colors.borderLight,
+    ...theme.shadows.medium,
   },
   requestHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    padding: theme.spacing.lg,
   },
   agentInfo: {
     flexDirection: 'row',
@@ -624,10 +559,10 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(19, 1, 57, 0.1)', // Koyu mor şeffaf
+    backgroundColor: theme.colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: theme.spacing.md,
   },
   agentIcon: {
     fontSize: 20,
@@ -636,144 +571,134 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   agentName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#130139', // Koyu mor metin rengi
-    marginBottom: 2,
+    fontSize: theme.fontSizes.lg,
+    fontWeight: theme.fontWeights.semibold,
+    color: theme.colors.primary,
+    marginBottom: theme.spacing.xs,
   },
   agentOffice: {
-    fontSize: 11,
-    color: '#374151', // Gri metin rengi
-    fontWeight: '400',
-    marginBottom: 2,
+    fontSize: theme.fontSizes.sm,
+    color: theme.colors.textSecondary,
+    fontWeight: theme.fontWeights.normal,
+    marginBottom: theme.spacing.xs,
   },
   agentTime: {
-    fontSize: 11,
-    color: '#ff0000', // Kırmızı kalacak (gün sayısı için)
-    fontWeight: '500',
+    fontSize: theme.fontSizes.sm,
+    color: theme.colors.error,
+    fontWeight: theme.fontWeights.medium,
   },
   requestActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
   },
   favoriteButton: {
-    padding: 4,
+    padding: theme.spacing.xs,
+    marginRight: theme.spacing.sm,
   },
   favoriteIcon: {
-    fontSize: 16,
-    color: '#FFFFFF',
+    fontSize: theme.fontSizes.lg,
+    color: theme.colors.white,
   },
   hideButton: {
-    padding: 4,
+    padding: theme.spacing.xs,
+    marginRight: theme.spacing.sm,
   },
   hideIcon: {
-    fontSize: 16,
+    fontSize: theme.fontSizes.lg,
+    color: theme.colors.textSecondary,
   },
   statusBadge: {
-    backgroundColor: 'rgba(19, 1, 57, 0.1)', // Koyu mor şeffaf
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
+    backgroundColor: theme.colors.primaryLight,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.sm,
+    marginRight: theme.spacing.sm,
   },
   propertyType: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#130139', // Koyu mor metin rengi
+    fontSize: theme.fontSizes.xs,
+    fontWeight: theme.fontWeights.semibold,
+    color: theme.colors.primary,
   },
 
   statusButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.sm,
+    marginRight: theme.spacing.sm,
   },
   statusText: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#ffffff',
+    fontSize: theme.fontSizes.xs,
+    fontWeight: theme.fontWeights.semibold,
+    color: theme.colors.white,
   },
   detailsButton: {
-    padding: 4,
+    padding: theme.spacing.xs,
+    marginRight: theme.spacing.sm,
   },
   detailsButtonText: {
-    fontSize: 16,
+    fontSize: theme.fontSizes.lg,
+    color: theme.colors.primary,
   },
   expandButton: {
-    padding: 4,
+    padding: theme.spacing.xs,
   },
   expandIcon: {
     fontSize: 12,
     color: theme.colors.textSecondary,
   },
   requestDetails: {
-    padding: 16,
-    paddingTop: 12,
+    padding: theme.spacing.lg,
+    paddingTop: theme.spacing.md,
     borderTopWidth: 2,
-    borderTopColor: 'rgba(19, 1, 57, 0.2)', // Koyu mor şeffaf border
+    borderTopColor: theme.colors.borderLight,
   },
   detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: theme.spacing.sm,
   },
   detailLabel: {
-    fontSize: 12,
-    color: '#374151', // Gri metin rengi
+    fontSize: theme.fontSizes.sm,
+    color: theme.colors.textSecondary,
     flex: 1,
   },
   detailValue: {
-    fontSize: 12,
-    color: '#130139', // Koyu mor metin rengi
-    fontWeight: '500',
+    fontSize: theme.fontSizes.sm,
+    color: theme.colors.primary,
+    fontWeight: theme.fontWeights.medium,
     flex: 2,
     textAlign: 'right',
   },
-  matchingButton: {
-    backgroundColor: '#130139', // Koyu tema rengi
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginTop: 12,
-    alignItems: 'center',
-  },
-  matchingButtonText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
+
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 40,
-    gap: 8,
-    backgroundColor: 'rgba(19, 1, 57, 0.95)', // Anasayfadaki koyu mor container
-    borderRadius: 15,
-    padding: 30,
-    marginHorizontal: 20,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.4,
-    shadowRadius: 25,
-    elevation: 20,
+    paddingTop: theme.spacing.xl,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.xl,
+    padding: theme.spacing.xxl,
+    marginHorizontal: theme.spacing.lg,
+    ...theme.shadows.large,
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
+    borderColor: theme.colors.borderLight,
   },
   emptyIcon: {
     fontSize: 64,
-    marginBottom: 16,
+    marginBottom: theme.spacing.lg,
   },
   emptyText: {
-    color: '#FFFFFF', // Beyaz metin
-    fontSize: 18,
-    fontWeight: '600',
+    color: theme.colors.white,
+    fontSize: theme.fontSizes.xl,
+    fontWeight: theme.fontWeights.semibold,
     textAlign: 'center',
   },
   emptySubtext: {
-    color: 'rgba(255, 255, 255, 0.8)', // Şeffaf beyaz
-    fontSize: 14,
+    color: theme.colors.textWhite,
+    opacity: 0.8,
+    fontSize: theme.fontSizes.md,
     textAlign: 'center',
-    paddingHorizontal: 32,
+    paddingHorizontal: theme.spacing.xxl,
   },
   modalContainer: {
     flex: 1,
@@ -783,60 +708,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    padding: theme.spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
     paddingTop: 50,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: theme.colors.text,
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.bold,
+    color: theme.colors.white,
   },
   closeButton: {
-    fontSize: 24,
+    fontSize: theme.fontSizes.xxxl,
     color: theme.colors.textSecondary,
-    padding: 4,
+    padding: theme.spacing.xs,
   },
+
+
   modalContent: {
     flex: 1,
     padding: 20,
-  },
-  modalSubtitle: {
-    fontSize: 16,
-    color: theme.colors.textSecondary,
-    marginBottom: 20,
-  },
-  matchingPortfolioCard: {
-    backgroundColor: theme.colors.cardBg,
-    borderRadius: theme.borderRadius.md,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  portfolioTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.text,
-    marginBottom: 4,
-  },
-  portfolioDetails: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
-    marginBottom: 12,
-  },
-  viewPortfolioButton: {
-    backgroundColor: '#130139', // Koyu tema rengi
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 6,
-    alignSelf: 'flex-start',
-  },
-  viewPortfolioText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '600',
   },
   detailSection: {
     marginBottom: 24,

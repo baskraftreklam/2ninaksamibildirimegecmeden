@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   TextInput,
-  Alert,
 } from 'react-native';
 import { theme } from '../theme/theme';
 
@@ -23,15 +22,6 @@ const turkishCities = [
   'Trabzon', 'Tunceli', 'Şanlıurfa', 'Uşak', 'Van', 'Yozgat', 'Zonguldak', 'Aksaray', 'Bayburt', 'Karaman',
   'Kırıkkale', 'Batman', 'Şırnak', 'Bartın', 'Ardahan', 'Iğdır', 'Yalova', 'Karabük', 'Kilis', 'Osmaniye', 'Düzce'
 ];
-
-// Atakum mahalleleri
-const atakumNeighborhoods = [
-  "Aksu", "Alanlı", "Atakent", "Balaç", "Beypınar", "Büyükkolpınar",
-  "Cumhuriyet", "Çamlıyazı", "Çatalçam", "Denizevleri", "Elmaçukuru",
-  "Erikli", "Esenevler", "Güzelyalı", "İncesu", "İstiklal", "Karakavuk",
-  "Kamalı", "Kesilli", "Körfez", "Küçükkolpınar", "Mevlana", "Mimar Sinan",
-  "Taflan", "Yeni Mahalle", "Yeşiltepe"
-].sort();
 
 const FiltersModal = ({ visible, onClose, onApply, initialFilters = {} }) => {
   const [filters, setFilters] = useState({
@@ -76,18 +66,12 @@ const FiltersModal = ({ visible, onClose, onApply, initialFilters = {} }) => {
       <TouchableOpacity
         style={styles.pickerButton}
         onPress={() => {
-          Alert.alert(
-            label,
-            '',
-            [
-              { text: 'Tümü', onPress: () => onSelect('') },
-              ...options.map(option => ({
-                text: option,
-                onPress: () => onSelect(option)
-              })),
-              { text: 'İptal', style: 'cancel' }
-            ]
-          );
+          // Basit picker yerine daha iyi bir UI kullanılabilir
+          // Şimdilik basit bir seçim yapıyoruz
+          const currentIndex = options.indexOf(value);
+          const nextIndex = (currentIndex + 1) % (options.length + 1);
+          const nextValue = nextIndex === 0 ? '' : options[nextIndex - 1];
+          onSelect(nextValue);
         }}
       >
         <Text style={styles.pickerButtonText}>
@@ -168,15 +152,14 @@ const styles = StyleSheet.create({
     paddingTop: 50,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.bold,
     color: theme.colors.text,
   },
   closeButton: {
-    fontSize: 24,
+    fontSize: theme.fontSizes.xxxl,
     color: theme.colors.textSecondary,
     padding: theme.spacing.sm,
-
   },
   content: {
     flex: 1,
@@ -186,8 +169,8 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
   },
   filterLabel: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: theme.fontSizes.xl,
+    fontWeight: theme.fontWeights.semibold,
     color: theme.colors.text,
     marginBottom: theme.spacing.sm,
   },
@@ -199,7 +182,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
   },
   pickerButtonText: {
-    fontSize: 16,
+    fontSize: theme.fontSizes.xl,
     color: theme.colors.text,
   },
   input: {
@@ -209,7 +192,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.md,
     color: theme.colors.text,
-    fontSize: 16,
+    fontSize: theme.fontSizes.xl,
   },
   footer: {
     flexDirection: 'row',
@@ -227,8 +210,8 @@ const styles = StyleSheet.create({
   },
   resetButtonText: {
     color: theme.colors.text,
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: theme.fontSizes.xl,
+    fontWeight: theme.fontWeights.semibold,
   },
   applyButton: {
     flex: 1,
@@ -239,8 +222,8 @@ const styles = StyleSheet.create({
   },
   applyButtonText: {
     color: theme.colors.white,
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: theme.fontSizes.xl,
+    fontWeight: theme.fontWeights.semibold,
   },
 });
 

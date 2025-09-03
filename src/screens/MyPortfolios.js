@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   FlatList,
   Image,
-  Dimensions,
   Alert,
   ActivityIndicator,
   Animated,
@@ -17,8 +16,6 @@ import { useAuth } from '../context/AuthContext';
 import { theme } from '../theme/theme';
 import { fetchUserPortfolios, togglePortfolioPublishStatus } from '../services/firestore';
 import ListingCard from '../components/ListingCard';
-
-const { width } = Dimensions.get('window');
 
 const MyPortfolios = () => {
   const navigation = useNavigation();
@@ -37,15 +34,15 @@ const MyPortfolios = () => {
 
   // Load user portfolios on component mount
   useEffect(() => {
-    if (user) {
-      loadUserPortfolios();
-    }
-  }, [user, loadUserPortfolios]);
+    // Geçici olarak mock user kullan
+    const mockUser = { uid: 'mock-user-id' };
+    loadUserPortfolios(mockUser.uid);
+  }, [loadUserPortfolios]);
 
-  const loadUserPortfolios = useCallback(async () => {
+  const loadUserPortfolios = useCallback(async (userId) => {
     try {
       setLoading(true);
-      const data = await fetchUserPortfolios(user.uid);
+      const data = await fetchUserPortfolios(userId);
       setPortfolios(data);
       console.log('[MyPortfolios] user portfolios loaded:', data.length);
     } catch (error) {
@@ -54,7 +51,7 @@ const MyPortfolios = () => {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, []);
 
   const handleToggleVisibility = (portfolioId) => {
     setHiddenPortfolios(prev => {
@@ -176,7 +173,7 @@ const MyPortfolios = () => {
              {/* Portfolio Card */}
        <ListingCard
          listing={portfolio}
-         onPress={() => navigation.navigate('PropertyDetail', { portfolio })}
+         onPress={() => navigation.navigate('Ana Sayfa', { screen: 'PropertyDetail', params: { portfolio } })}
          isEditable={true}
        />
     </View>
@@ -185,7 +182,7 @@ const MyPortfolios = () => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#FFFFFF" />
+        <ActivityIndicator size="large" color={theme.colors.white} />
         <Text style={styles.loadingText}>Portföyler yükleniyor...</Text>
       </View>
     );
@@ -274,7 +271,7 @@ const MyPortfolios = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#130139',
+    backgroundColor: theme.colors.primary,
   },
   
   // Arka Plan
@@ -284,182 +281,168 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#130139',
+    backgroundColor: theme.colors.primary,
   },
   
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
+    paddingHorizontal: theme.spacing.lg,
     paddingTop: 60,
-    paddingBottom: 20,
-    backgroundColor: 'rgba(19, 1, 57, 0.85)',
+    paddingBottom: theme.spacing.lg,
+    backgroundColor: theme.colors.primary + 'D9',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.2)',
-    marginBottom: 20,
+    borderBottomColor: theme.colors.borderLight,
+    marginBottom: theme.spacing.lg,
   },
   
   headerButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: theme.colors.borderLight,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    borderColor: theme.colors.border,
+    ...theme.shadows.small,
   },
 
   headerButtonBack: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.colors.white,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderColor: theme.colors.borderLight,
+    ...theme.shadows.medium,
   },
   
   headerButtonIcon: {
     width: 24,
     height: 24,
     resizeMode: 'contain',
-    tintColor: '#FFFFFF',
+    tintColor: theme.colors.white,
   },
 
   headerButtonIconBack: {
     width: 20,
     height: 20,
     resizeMode: 'contain',
-    tintColor: '#130139',
+    tintColor: theme.colors.primary,
   },
 
-
-
   headerButtonActive: {
-    backgroundColor: 'rgba(16, 185, 129, 0.3)',
-    borderColor: '#10b981',
+    backgroundColor: theme.colors.success + '4D',
+    borderColor: theme.colors.success,
   },
   
   headerContent: {
     flex: 1,
     alignItems: 'center',
-    marginHorizontal: 20,
+    marginHorizontal: theme.spacing.lg,
   },
   
   mainTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontSize: theme.fontSizes.xxxl,
+    fontWeight: theme.fontWeights.bold,
+    color: theme.colors.white,
     textAlign: 'center',
   },
   
   mainSubtitle: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: theme.fontSizes.md,
+    color: theme.colors.textWhite + 'CC',
     textAlign: 'center',
-    marginTop: 4,
+    marginTop: theme.spacing.xs,
   },
   
   listContainer: {
-    padding: 20,
+    padding: theme.spacing.lg,
     paddingBottom: 100,
   },
   
   portfolioRow: {
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: theme.spacing.lg,
   },
   
   portfolioCardContainer: {
-    width: (width - 60) / 2,
-    marginBottom: 20,
+    width: '48%',
+    marginBottom: theme.spacing.lg,
   },
   
   portfolioCardHeader: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
     alignItems: 'center',
-    marginBottom: 12,
-    paddingHorizontal: 4,
+    marginBottom: theme.spacing.md,
+    paddingHorizontal: theme.spacing.xs,
   },
   
   actionButton: {
-    padding: 8,
-    borderRadius: 8,
+    padding: theme.spacing.sm,
+    borderRadius: theme.borderRadius.sm,
     borderWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     minWidth: 80,
-    paddingHorizontal: 12,
-    transition: 'all 0.3s ease',
+    paddingHorizontal: theme.spacing.md,
   },
   
   actionButtonVisible: {
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    backgroundColor: theme.colors.success + '1A',
   },
   
   actionButtonHidden: {
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    backgroundColor: theme.colors.error + '1A',
     minWidth: 60,
-    paddingHorizontal: 8,
+    paddingHorizontal: theme.spacing.sm,
   },
   
   actionButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    transition: 'all 0.3s ease',
+    fontSize: theme.fontSizes.sm,
+    fontWeight: theme.fontWeights.semibold,
+    color: theme.colors.white,
   },
   
   actionButtonTextVisible: {
     opacity: 1,
-    transform: [{ scale: 1 }],
   },
   
   actionButtonTextHidden: {
     opacity: 0.9,
-    transform: [{ scale: 0.95 }],
   },
   
   statusDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    marginRight: 8,
+    marginRight: theme.spacing.sm,
   },
   
   statusDotPublished: {
-    backgroundColor: '#10b981',
+    backgroundColor: theme.colors.success,
   },
   
   statusDotHidden: {
-    backgroundColor: '#ef4444',
+    backgroundColor: theme.colors.error,
   },
 
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#130139',
+    backgroundColor: theme.colors.primary,
   },
 
   loadingText: {
-    color: '#FFFFFF',
-    marginTop: 10,
-    fontSize: 16,
+    color: theme.colors.white,
+    marginTop: theme.spacing.sm,
+    fontSize: theme.fontSizes.xl,
   },
 
   // Popup Styles
@@ -469,24 +452,20 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: theme.colors.overlay,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1000,
   },
 
   popupContainer: {
-    backgroundColor: 'rgba(19, 1, 57, 0.95)',
-    borderRadius: 20,
+    backgroundColor: theme.colors.primary + 'F2',
+    borderRadius: theme.borderRadius.xl,
     padding: 30,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.5,
-    shadowRadius: 25,
-    elevation: 20,
+    borderColor: theme.colors.borderLight,
+    ...theme.shadows.large,
     minWidth: 280,
   },
 
@@ -494,25 +473,25 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+    backgroundColor: theme.colors.success + '33',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: theme.spacing.lg,
     borderWidth: 2,
-    borderColor: '#10b981',
+    borderColor: theme.colors.success,
   },
 
   popupIcon: {
     width: 32,
     height: 32,
     resizeMode: 'contain',
-    tintColor: '#10b981',
+    tintColor: theme.colors.success,
   },
 
   popupMessage: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.semibold,
+    color: theme.colors.white,
     textAlign: 'center',
     lineHeight: 24,
   },

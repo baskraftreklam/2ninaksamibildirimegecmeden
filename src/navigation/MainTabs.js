@@ -1,9 +1,8 @@
 // src/navigation/MainTabs.js
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Animated, Modal, Dimensions } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 
 // Screens
 import Home from '../screens/Home';
@@ -15,19 +14,20 @@ import Profile from '../screens/Profile';
 import PropertyDetail from '../screens/PropertyDetail';
 import MyPortfolios from '../screens/MyPortfolios';
 import DemandPool from '../screens/DemandPool';
+import NotificationTest from '../screens/NotificationTest';
+import Notifications from '../screens/Notifications';
+import RequestDetail from '../screens/RequestDetail';
+import Subscription from '../screens/Subscription';
+import Packages from '../screens/Packages';
+import Payment from '../screens/Payment';
+import SubscriptionManagement from '../screens/SubscriptionManagement';
+import Calendar from '../screens/Calendar';
+import EditProfile from '../screens/EditProfile';
 
 
-
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
-
-
-
-
-
-
-
 
 // Request Stack
 const RequestStack = () => (
@@ -35,6 +35,19 @@ const RequestStack = () => (
     <Stack.Screen name="RequestList" component={RequestList} />
     <Stack.Screen name="RequestForm" component={RequestForm} />
     <Stack.Screen name="AddPortfolio" component={AddPortfolio} />
+  </Stack.Navigator>
+);
+
+// Profile Stack
+const ProfileStack = () => (
+  <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Screen name="Profile" component={Profile} />
+    <Stack.Screen name="NotificationTest" component={NotificationTest} />
+    <Stack.Screen name="Subscription" component={Subscription} />
+    <Stack.Screen name="Packages" component={Packages} />
+    <Stack.Screen name="Payment" component={Payment} />
+    <Stack.Screen name="SubscriptionManagement" component={SubscriptionManagement} />
+    <Stack.Screen name="EditProfile" component={EditProfile} />
   </Stack.Navigator>
 );
 
@@ -49,6 +62,10 @@ const HomeStack = () => (
     <Stack.Screen name="PortfolioList" component={PortfolioList} />
     <Stack.Screen name="DemandPool" component={DemandPool} />
     <Stack.Screen name="AddPortfolio" component={AddPortfolio} />
+    <Stack.Screen name="NotificationTest" component={NotificationTest} />
+    <Stack.Screen name="Notifications" component={Notifications} />
+    <Stack.Screen name="RequestDetail" component={RequestDetail} />
+    <Stack.Screen name="Calendar" component={Calendar} />
   </Stack.Navigator>
 );
 
@@ -58,16 +75,8 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
   const slideAnimation = useRef(new Animated.Value(0)).current;
   const fadeAnimation = useRef(new Animated.Value(0)).current;
   const buttonScaleAnimation = useRef(new Animated.Value(0.8)).current;
-  const isMounted = useRef(true);
-
-  useEffect(() => {
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
 
   const showModal = () => {
-    if (!isMounted.current) return;
     setIsModalVisible(true);
     
     // Slide up animation
@@ -89,16 +98,10 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
         tension: 80,
         friction: 6,
       }),
-    ]).start(() => {
-      if (isMounted.current) {
-        // Animation completed safely
-      }
-    });
+    ]).start();
   };
 
   const hideModal = () => {
-    if (!isMounted.current) return;
-    
     // Slide down animation
     Animated.parallel([
       Animated.spring(slideAnimation, {
@@ -118,20 +121,16 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
         useNativeDriver: true,
       }),
     ]).start(() => {
-      if (isMounted.current) {
-        setIsModalVisible(false);
-      }
+      setIsModalVisible(false);
     });
   };
 
   const handlePortfolioAdd = () => {
-    if (!isMounted.current) return;
     hideModal();
     navigation.navigate('Ana Sayfa', { screen: 'AddPortfolio' });
   };
 
   const handleRequestAdd = () => {
-    if (!isMounted.current) return;
     hideModal();
     navigation.navigate('Taleplerim', { screen: 'RequestForm' });
   };
@@ -143,8 +142,6 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
         const isFocused = state.index === index;
         
         const onPress = () => {
-          if (!isMounted.current) return;
-          
           if (route.name === 'Ekleme') {
             showModal();
             return;
@@ -225,7 +222,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
 
       {/* Enhanced Modal for Add Options */}
       <Modal
-        visible={isModalVisible && isMounted.current}
+        visible={isModalVisible}
         transparent={true}
         animationType="none"
         onRequestClose={hideModal}
@@ -292,14 +289,6 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
 };
 
 const MainTabs = () => {
-  const isMounted = useRef(true);
-
-  useEffect(() => {
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
-
   return (
     <View style={styles.container}>
       <Tab.Navigator
@@ -312,10 +301,10 @@ const MainTabs = () => {
         <Tab.Screen name="Portföylerim" component={MyPortfolios} />
         <Tab.Screen name="Ekleme" component={Home} />
         <Tab.Screen name="Taleplerim" component={RequestStack} />
-        <Tab.Screen name="Profil" component={Profile} />
+        <Tab.Screen name="Profil" component={ProfileStack} />
       </Tab.Navigator>
     </View>
-  );
+   );
 };
 
 const styles = StyleSheet.create({
@@ -324,14 +313,13 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   
-  // Custom Tab Bar
   customTabBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     height: 60,
-    backgroundColor: '#FFFFFF', // Beyaz arka plan
+    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     marginBottom: 0,
@@ -341,14 +329,12 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
     borderWidth: 0,
-    // Flexbox ile mükemmel ortalama
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-evenly',
     paddingHorizontal: 20,
   },
   
-  // Tab Item
   tabItem: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -357,17 +343,15 @@ const styles = StyleSheet.create({
     height: 50,
   },
   
-  // Icon Image
   iconImage: {
     width: 24,
     height: 24,
   },
   
-  // Merkezdeki + butonu
   centerAddButton: {
     width: 48,
     height: 48,
-    backgroundColor: '#130139', // Koyu mor arka plan
+    backgroundColor: '#130139',
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -377,26 +361,24 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
     borderWidth: 2,
-    borderColor: '#130139', // Koyu mor renk
+    borderColor: '#130139',
   },
   
   addButtonPlus: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#FFFFFF', // Beyaz metin
+    color: '#FFFFFF',
   },
   
-  // Active Dot - Daha yakın konumlandırıldı
   activeDot: {
     position: 'absolute',
-    bottom: -4, // Daha yakın - önceki -8'den -4'e değiştirildi
+    bottom: -4,
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#130139', // Koyu mor
+    backgroundColor: '#130139',
   },
   
-  // Enhanced Modal Styles
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
@@ -411,7 +393,7 @@ const styles = StyleSheet.create({
   },
   
   modalContent: {
-    backgroundColor: 'rgba(26, 26, 26, 0.95)', // Dark glassmorphism background
+    backgroundColor: 'rgba(26, 26, 26, 0.95)',
     borderRadius: 25,
     padding: 25,
     shadowColor: '#000000',
@@ -421,7 +403,6 @@ const styles = StyleSheet.create({
     elevation: 15,
     minWidth: 300,
     maxWidth: width * 0.85,
-    // Glassmorphism effect
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
     backdropFilter: 'blur(20px)',
@@ -434,7 +415,7 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     paddingHorizontal: 20,
     marginVertical: 8,
-    backgroundColor: '#130139', // Koyu mor renk
+    backgroundColor: '#130139',
     borderRadius: 20,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
@@ -460,20 +441,20 @@ const styles = StyleSheet.create({
   
   modalButtonText: {
     fontSize: 16,
-    color: '#ffffff', // White text on red background
+    color: '#ffffff',
     fontWeight: '700',
     marginBottom: 2,
   },
   
   modalButtonSubtext: {
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.8)', // Semi-transparent white
+    color: 'rgba(255, 255, 255, 0.8)',
     fontWeight: '500',
   },
   
   modalButtonArrow: {
     fontSize: 20,
-    color: '#ffffff', // White arrow on red background
+    color: '#ffffff',
     fontWeight: '600',
   },
 });

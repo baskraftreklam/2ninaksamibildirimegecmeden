@@ -5,75 +5,23 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  Dimensions,
   Animated,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../theme/theme';
-
-const { width, height } = Dimensions.get('window');
+import { SUBSCRIPTION_PLANS, calculatePackageComparison, getRecommendedPlan } from '../utils/subscription';
 
 const Packages = () => {
   const navigation = useNavigation();
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [fadeAnim] = useState(new Animated.Value(0));
-
-  const packages = [
-    {
-      id: 'monthly',
-      name: 'Aylık',
-      price: '199.00₺',
-      billing: '/ay',
-      features: [
-        'Sınırsız Portföy Ekleme',
-        'Sınırsız Talep Ekleme',
-        'Talep Havuzu Erişimi',
-        '7/24 Destek'
-      ],
-      popular: false,
-    },
-    {
-      id: 'quarterly',
-      name: '3 Aylık',
-      price: '500.00₺',
-      billing: '/3 ay',
-      features: [
-        'Tüm Aylık Paket Özellikleri',
-        'İstatistik ve Raporlama',
-        'Öne Çıkan İlan Hakkı',
-        'WhatsApp Entegrasyonu'
-      ],
-      popular: true,
-    },
-    {
-      id: 'semiannual',
-      name: '6 Aylık',
-      price: '990.00₺',
-      billing: '/6 ay',
-      features: [
-        'Tüm 3 Aylık Paket Özellikleri',
-        'Özel Danışman Desteği',
-        'Gelişmiş Pazarlama Araçları',
-        'Web Sitesi Entegrasyonu'
-      ],
-      popular: false,
-    },
-    {
-      id: 'yearly',
-      name: 'Yıllık Pro',
-      price: '1599.00₺',
-      billing: '/yıl',
-      features: [
-        'Tüm 6 Aylık Paket Özellikleri',
-        'Eğitim ve Webinarlar',
-        'Öncelikli Destek',
-        'Özel Raporlama'
-      ],
-      popular: false,
-    }
-  ];
+  const [packages] = useState(() => calculatePackageComparison());
 
   useEffect(() => {
+    // En popüler paketi varsayılan olarak seç
+    const recommended = getRecommendedPlan();
+    setSelectedPackage(recommended);
+    
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 800,
@@ -113,6 +61,12 @@ const Packages = () => {
           </View>
         )}
 
+        {pkg.discount > 0 && (
+          <View style={styles.discountBadge}>
+            <Text style={styles.discountText}>%{pkg.discount} İndirim</Text>
+          </View>
+        )}
+
         <TouchableOpacity
           style={styles.packageContent}
           onPress={() => handlePackageSelect(pkg)}
@@ -120,12 +74,27 @@ const Packages = () => {
         >
           <View style={styles.packageHeader}>
             <Text style={styles.packageName}>{pkg.name}</Text>
-            <Text style={styles.packagePrice}>{pkg.price}</Text>
-            <Text style={styles.packageBilling}>{pkg.billing}</Text>
+            
+            <View style={styles.priceContainer}>
+              {pkg.discount > 0 && pkg.originalPrice && (
+                <Text style={styles.originalPrice}>
+                  {pkg.originalPrice.toFixed(2)}₺
+                </Text>
+              )}
+              <Text style={styles.packagePrice}>{pkg.price}₺</Text>
+              <Text style={styles.packageBilling}>{pkg.billing}</Text>
+            </View>
+
+            {pkg.discount > 0 && (
+              <Text style={styles.savingsText}>
+                {pkg.savings}
+              </Text>
+            )}
           </View>
 
           <View style={styles.featuresContainer}>
-            {pkg.features.map((feature, featureIndex) => (
+            <Text style={styles.featuresTitle}>Tüm Paketlerde Dahil:</Text>
+            {pkg.features.slice(0, 6).map((feature, featureIndex) => (
               <View key={featureIndex} style={styles.featureItem}>
                 <View style={styles.checkIcon}>
                   <Text style={styles.checkText}>✓</Text>
@@ -133,6 +102,14 @@ const Packages = () => {
                 <Text style={styles.featureText}>{feature}</Text>
               </View>
             ))}
+            
+            {pkg.features.length > 6 && (
+              <View style={styles.moreFeatures}>
+                <Text style={styles.moreFeaturesText}>
+                  +{pkg.features.length - 6} özellik daha
+                </Text>
+              </View>
+            )}
           </View>
 
           <View style={styles.selectionIndicator}>
@@ -164,7 +141,7 @@ const Packages = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Abonelik Paketleri</Text>
           <Text style={styles.sectionDescription}>
-            İhtiyaçlarınıza en uygun paketi seçin ve hemen başlayın.
+            Tüm paketlerde aynı özellikler! Sadece süre seçin ve indirimden yararlanın.
           </Text>
         </View>
 
@@ -183,12 +160,24 @@ const Packages = () => {
               <Text style={styles.selectedPackageText}>
                 Seçilen Paket: <Text style={styles.selectedPackageName}>{selectedPackage.name}</Text>
               </Text>
-              <Text style={styles.selectedPackagePrice}>{selectedPackage.price}</Text>
+              <View style={styles.priceRow}>
+                {selectedPackage.discount > 0 && selectedPackage.originalPrice && (
+                  <Text style={styles.originalPriceDisplay}>
+                    {selectedPackage.originalPrice.toFixed(2)}₺
+                  </Text>
+                )}
+                <Text style={styles.selectedPackagePrice}>{selectedPackage.price}₺</Text>
+              </View>
+              {selectedPackage.discount > 0 && (
+                <Text style={styles.discountDisplay}>
+                  %{selectedPackage.discount} tasarruf sağlıyorsunuz!
+                </Text>
+              )}
             </View>
 
             <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
               <Text style={styles.continueButtonText}>
-                Devam Et - {selectedPackage.price}
+                Devam Et - {selectedPackage.price}₺
               </Text>
             </TouchableOpacity>
           </Animated.View>
@@ -209,6 +198,34 @@ const Packages = () => {
             <Text style={styles.infoText}>
               • Güvenli ödeme sistemi
             </Text>
+            <Text style={styles.infoText}>
+              • Tüm paketlerde aynı özellikler
+            </Text>
+            <Text style={styles.infoText}>
+              • Uzun vadeli paketlerde ekstra indirim
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.comparisonSection}>
+          <Text style={styles.comparisonTitle}>Paket Karşılaştırması</Text>
+          <View style={styles.comparisonCard}>
+            <View style={styles.comparisonRow}>
+              <Text style={styles.comparisonLabel}>Aylık:</Text>
+              <Text style={styles.comparisonValue}>199₺/ay</Text>
+            </View>
+            <View style={styles.comparisonRow}>
+              <Text style={styles.comparisonLabel}>3 Aylık:</Text>
+              <Text style={styles.comparisonValue}>167₺/ay (%16 tasarruf)</Text>
+            </View>
+            <View style={styles.comparisonRow}>
+              <Text style={styles.comparisonLabel}>6 Aylık:</Text>
+              <Text style={styles.comparisonValue}>165₺/ay (%17 tasarruf)</Text>
+            </View>
+            <View style={styles.comparisonRow}>
+              <Text style={styles.comparisonLabel}>Yıllık:</Text>
+              <Text style={styles.comparisonValue}>133₺/ay (%33 tasarruf)</Text>
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -235,12 +252,12 @@ const styles = StyleSheet.create({
     padding: theme.spacing.sm,
   },
   backIcon: {
-    fontSize: 24,
+    fontSize: theme.fontSizes.xxxl,
     color: theme.colors.text,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.bold,
     color: theme.colors.text,
   },
   placeholder: {
@@ -254,18 +271,17 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xl,
   },
   sectionTitle: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontSize: theme.fontSizes.xxxl,
+    fontWeight: theme.fontWeights.bold,
     color: theme.colors.text,
     marginBottom: theme.spacing.sm,
   },
   sectionDescription: {
-    fontSize: 16,
+    fontSize: theme.fontSizes.xl,
     color: theme.colors.textSecondary,
     lineHeight: 24,
   },
   packagesContainer: {
-    gap: theme.spacing.lg,
     marginBottom: theme.spacing.xl,
   },
   packageCard: {
@@ -275,6 +291,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
     overflow: 'hidden',
     position: 'relative',
+    marginBottom: theme.spacing.lg,
   },
   packageCardSelected: {
     borderColor: theme.colors.primary,
@@ -287,11 +304,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
     borderBottomLeftRadius: theme.borderRadius.md,
+    zIndex: 1,
   },
   popularText: {
     color: theme.colors.white,
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: theme.fontSizes.sm,
+    fontWeight: theme.fontWeights.semibold,
+  },
+  discountBadge: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    backgroundColor: theme.colors.success,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderBottomRightRadius: theme.borderRadius.md,
+    zIndex: 1,
+  },
+  discountText: {
+    color: theme.colors.white,
+    fontSize: theme.fontSizes.sm,
+    fontWeight: theme.fontWeights.semibold,
   },
   packageContent: {
     padding: theme.spacing.lg,
@@ -301,23 +334,45 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
   },
   packageName: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontSize: theme.fontSizes.xxxl,
+    fontWeight: theme.fontWeights.bold,
     color: theme.colors.text,
     marginBottom: theme.spacing.sm,
   },
+  priceContainer: {
+    alignItems: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+  originalPrice: {
+    fontSize: theme.fontSizes.xxl,
+    color: theme.colors.textSecondary,
+    textDecorationLine: 'line-through',
+    marginBottom: theme.spacing.xs,
+  },
   packagePrice: {
-    fontSize: 32,
-    fontWeight: '700',
+    fontSize: theme.fontSizes.xxxl,
+    fontWeight: theme.fontWeights.bold,
     color: theme.colors.primary,
     marginBottom: theme.spacing.xs,
   },
   packageBilling: {
-    fontSize: 16,
+    fontSize: theme.fontSizes.xl,
     color: theme.colors.textSecondary,
+  },
+  savingsText: {
+    fontSize: theme.fontSizes.md,
+    color: theme.colors.success,
+    fontWeight: theme.fontWeights.semibold,
   },
   featuresContainer: {
     marginBottom: theme.spacing.lg,
+  },
+  featuresTitle: {
+    fontSize: theme.fontSizes.xl,
+    fontWeight: theme.fontWeights.semibold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.md,
+    textAlign: 'center',
   },
   featureItem: {
     flexDirection: 'row',
@@ -328,20 +383,29 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#10b981',
+    backgroundColor: theme.colors.success,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: theme.spacing.md,
   },
   checkText: {
     color: theme.colors.white,
-    fontSize: 12,
-    fontWeight: 'bold',
+    fontSize: theme.fontSizes.sm,
+    fontWeight: theme.fontWeights.bold,
   },
   featureText: {
-    fontSize: 16,
+    fontSize: theme.fontSizes.xl,
     color: theme.colors.text,
     flex: 1,
+  },
+  moreFeatures: {
+    alignItems: 'center',
+    marginTop: theme.spacing.md,
+  },
+  moreFeaturesText: {
+    fontSize: theme.fontSizes.md,
+    color: theme.colors.primary,
+    fontWeight: theme.fontWeights.semibold,
   },
   selectionIndicator: {
     alignItems: 'center',
@@ -354,8 +418,8 @@ const styles = StyleSheet.create({
   },
   selectedText: {
     color: theme.colors.white,
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: theme.fontSizes.md,
+    fontWeight: theme.fontWeights.semibold,
   },
   continueSection: {
     marginBottom: theme.spacing.xl,
@@ -369,18 +433,36 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
   },
   selectedPackageText: {
-    fontSize: 16,
+    fontSize: theme.fontSizes.xl,
     color: theme.colors.textSecondary,
     marginBottom: theme.spacing.sm,
   },
   selectedPackageName: {
     color: theme.colors.primary,
-    fontWeight: '700',
+    fontWeight: theme.fontWeights.bold,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+  originalPriceDisplay: {
+    fontSize: theme.fontSizes.xxl,
+    color: theme.colors.textSecondary,
+    textDecorationLine: 'line-through',
+    marginRight: theme.spacing.md,
   },
   selectedPackagePrice: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontSize: theme.fontSizes.xxxl,
+    fontWeight: theme.fontWeights.bold,
     color: theme.colors.primary,
+  },
+  discountDisplay: {
+    fontSize: theme.fontSizes.md,
+    color: theme.colors.success,
+    fontWeight: theme.fontWeights.semibold,
+    textAlign: 'center',
   },
   continueButton: {
     backgroundColor: theme.colors.primary,
@@ -390,15 +472,15 @@ const styles = StyleSheet.create({
   },
   continueButtonText: {
     color: theme.colors.white,
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.semibold,
   },
   infoSection: {
     marginBottom: theme.spacing.xl,
   },
   infoTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.semibold,
     color: theme.colors.text,
     marginBottom: theme.spacing.md,
   },
@@ -410,10 +492,44 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
   },
   infoText: {
-    fontSize: 14,
+    fontSize: theme.fontSizes.md,
     color: theme.colors.textSecondary,
     marginBottom: theme.spacing.sm,
     lineHeight: 20,
+  },
+  comparisonSection: {
+    marginBottom: theme.spacing.xl,
+  },
+  comparisonTitle: {
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.semibold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.md,
+  },
+  comparisonCard: {
+    backgroundColor: theme.colors.cardBg,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  comparisonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: theme.spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.borderLight,
+  },
+  comparisonLabel: {
+    fontSize: theme.fontSizes.xl,
+    color: theme.colors.textSecondary,
+    fontWeight: theme.fontWeights.medium,
+  },
+  comparisonValue: {
+    fontSize: theme.fontSizes.xl,
+    color: theme.colors.text,
+    fontWeight: theme.fontWeights.semibold,
   },
 });
 

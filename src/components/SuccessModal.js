@@ -1,6 +1,4 @@
 // src/components/SuccessModal.js
-// Koyu tema ile merkezde görünen başarı popup komponenti
-// Kullanım: showSuccess("Mesaj")
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -105,21 +103,15 @@ export default function SuccessModal() {
         >
           {/* Başarı İkonu */}
           <View style={styles.iconContainer}>
-            <Text style={styles.successIcon}>
-              <Text>✅</Text>
-            </Text>
+            <Text style={styles.successIcon}>✅</Text>
           </View>
           
           {/* Mesaj */}
-          <Text style={styles.message}>
-            <Text>{message}</Text>
-          </Text>
+          <Text style={styles.message}>{message}</Text>
           
           {/* Kapat Butonu */}
           <TouchableOpacity onPress={hideModal} style={styles.closeButton}>
-            <Text style={styles.closeText}>
-              <Text>Tamam</Text>
-            </Text>
+            <Text style={styles.closeText}>Tamam</Text>
           </TouchableOpacity>
         </Animated.View>
       </Animated.View>

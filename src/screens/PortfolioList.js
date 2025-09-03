@@ -8,7 +8,6 @@ import {
   Alert,
   RefreshControl,
   ActivityIndicator,
-  Dimensions,
   Animated,
   Image
 } from 'react-native';
@@ -16,8 +15,6 @@ import { useAuth } from '../context/AuthContext';
 import { theme } from '../theme/theme';
 import { fetchPortfolios } from '../services/firestore';
 import FiltersModal from './FiltersModal';
-
-const { width, height } = Dimensions.get('window');
 
 const PortfolioList = ({ navigation }) => {
   const { user, userProfile } = useAuth();
@@ -66,7 +63,7 @@ const PortfolioList = ({ navigation }) => {
   };
 
   const handlePortfolioPress = (portfolio) => {
-    navigation.navigate('PropertyDetail', { portfolio });
+    navigation.navigate('Ana Sayfa', { screen: 'PropertyDetail', params: { portfolio } });
   };
 
   const applyFilters = (newFilters) => {
@@ -376,32 +373,32 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   loadingText: { 
-    color: '#FFFFFF', 
-    fontSize: 16, 
-    marginTop: 16,
-    fontWeight: '500',
+    color: theme.colors.white, 
+    fontSize: theme.fontSizes.xl, 
+    marginTop: theme.spacing.md,
+    fontWeight: theme.fontWeights.medium,
   },
   listContainer: { 
-    padding: 20, 
+    padding: theme.spacing.lg, 
     paddingTop: 50,
   },
   header: { 
-    marginBottom: 24,
+    marginBottom: theme.spacing.xxl,
   },
   headerContent: { 
     alignItems: 'center', 
-    marginBottom: 24,
+    marginBottom: theme.spacing.xxl,
   },
   mainTitle: { 
-    fontSize: 32, 
-    fontWeight: '700', 
+    fontSize: theme.fontSizes.xxxl, 
+    fontWeight: theme.fontWeights.bold, 
     color: theme.colors.text, 
-    marginBottom: 8, 
+    marginBottom: theme.spacing.sm, 
     letterSpacing: 1,
   },
   mainSubtitle: { 
-    fontSize: 16, 
-    color: '#ff0000', 
+    fontSize: theme.fontSizes.xl, 
+    color: theme.colors.primary, 
     opacity: 0.8,
   },
   headerTop: {
@@ -409,88 +406,84 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
-    marginBottom: 8,
+    marginBottom: theme.spacing.sm,
   },
   favoriteToggleButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: theme.colors.borderLight,
     borderWidth: 1,
-    borderColor: '#ffffff',
-    borderRadius: 8,
+    borderColor: theme.colors.white,
+    borderRadius: theme.borderRadius.sm,
     width: 40,
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
   },
   favoriteToggleButtonActive: {
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.colors.white,
   },
   favoriteToggleIcon: {
-    fontSize: 18,
-    color: '#ffffff',
+    fontSize: theme.fontSizes.xxl,
+    color: theme.colors.white,
   },
   filterContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 16,
-    gap: 12,
+    marginTop: theme.spacing.md,
   },
   filterButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: theme.colors.borderLight,
     borderWidth: 1,
-    borderColor: '#ffffff',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    borderColor: theme.colors.white,
+    borderRadius: theme.borderRadius.sm,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.md,
     flex: 1,
+    marginRight: theme.spacing.md,
   },
   filterButtonActive: {
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.colors.white,
   },
   filterIcon: {
-    fontSize: 16,
-    marginRight: 8,
+    fontSize: theme.fontSizes.xl,
+    marginRight: theme.spacing.sm,
   },
   filterButtonText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '600',
+    color: theme.colors.white,
+    fontSize: theme.fontSizes.md,
+    fontWeight: theme.fontWeights.semibold,
   },
   filterButtonTextActive: {
-    color: '#130139',
+    color: theme.colors.primary,
   },
   clearButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: theme.colors.borderLight,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.sm,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.md,
   },
   clearButtonText: {
     color: theme.colors.text,
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: theme.fontSizes.md,
+    fontWeight: theme.fontWeights.semibold,
   },
 
   cardRow: { 
     justifyContent: 'space-between', 
-    marginBottom: 16 
+    marginBottom: theme.spacing.md 
   },
   card: {
-    backgroundColor: '#FFFFFF', // Anasayfadaki beyaz kart rengi
-    borderRadius: Math.min(width * 0.05, 15), // Anasayfadaki border radius
+    backgroundColor: theme.colors.white,
+    borderRadius: theme.borderRadius.lg,
     overflow: 'hidden',
-    width: (width - 48) / 2,
+    width: '48%',
     borderWidth: 1,
-    borderColor: 'rgba(19, 1, 57, 0.1)', // Koyu mor şeffaf border
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.1,
-    shadowRadius: 15,
-    elevation: 8,
-    marginBottom: 16,
+    borderColor: theme.colors.borderLight,
+    ...theme.shadows.medium,
+    marginBottom: theme.spacing.md,
   },
   cardImageContainer: {
     position: 'relative',
@@ -501,169 +494,157 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   cardImagePlaceholder: {
-    backgroundColor: 'rgba(19, 1, 57, 0.1)', // Koyu mor şeffaf
+    backgroundColor: theme.colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
   },
   imageIcon: { 
-    fontSize: 32, 
-    color: '#130139' // Koyu mor
+    fontSize: theme.fontSizes.xxxl, 
+    color: theme.colors.primary
   },
   roomBadge: {
     position: 'absolute',
-    top: 8,
-    left: 8,
-    backgroundColor: '#130139', // Anasayfadaki koyu mor
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    top: theme.spacing.sm,
+    left: theme.spacing.sm,
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.xs,
+    paddingHorizontal: theme.spacing.xs,
+    paddingVertical: theme.spacing.xs,
   },
   roomBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '600',
+    color: theme.colors.white,
+    fontSize: theme.fontSizes.sm,
+    fontWeight: theme.fontWeights.semibold,
   },
   favoriteButton: {
     position: 'absolute',
-    bottom: 8,
-    right: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 6,
+    bottom: theme.spacing.sm,
+    right: theme.spacing.sm,
+    backgroundColor: theme.colors.white + 'E6',
+    borderRadius: theme.borderRadius.sm,
     width: 28,
     height: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    ...theme.shadows.small,
   },
   favoriteIcon: {
-    fontSize: 16,
+    fontSize: theme.fontSizes.xl,
   },
   cardContent: {
-    padding: 12,
+    padding: theme.spacing.md,
   },
   cardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: theme.spacing.sm,
   },
   cardInfo: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   cardRoomCount: {
-    backgroundColor: 'rgba(19, 1, 57, 0.1)', // Koyu mor şeffaf
-    color: '#130139', // Koyu mor
-    fontSize: 10,
-    fontWeight: '600',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    backgroundColor: theme.colors.primaryLight,
+    color: theme.colors.primary,
+    fontSize: theme.fontSizes.sm,
+    fontWeight: theme.fontWeights.semibold,
+    paddingHorizontal: theme.spacing.xs,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.xs,
   },
   cardTitle: { 
-    color: '#130139', // Anasayfadaki koyu mor metin rengi
-    fontWeight: '800', 
-    fontSize: 15,
-    marginBottom: 4
+    color: theme.colors.primary, 
+    fontWeight: theme.fontWeights.bold, 
+    fontSize: theme.fontSizes.md,
+    marginBottom: theme.spacing.xs
   },
   cardLocation: { 
-    color: '#374151', // Anasayfadaki gri metin rengi
-    fontSize: 12, 
-    fontWeight: '600',
-    marginBottom: 4
+    color: theme.colors.textSecondary, 
+    fontSize: theme.fontSizes.sm, 
+    fontWeight: theme.fontWeights.semibold,
+    marginBottom: theme.spacing.xs
   },
   cardPrice: { 
-    color: '#130139', // Anasayfadaki koyu mor
-    fontSize: 14, 
-    fontWeight: '700' 
+    color: theme.colors.primary, 
+    fontSize: theme.fontSizes.md, 
+    fontWeight: theme.fontWeights.bold 
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 40,
-    gap: 8,
-    backgroundColor: 'rgba(19, 1, 57, 0.85)', // Anasayfadaki koyu mor container
-    borderRadius: 15,
+    paddingTop: theme.spacing.xxl,
+    backgroundColor: theme.colors.primary + 'D9',
+    borderRadius: theme.borderRadius.lg,
     padding: 30,
-    marginTop: 20,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 15,
+    marginTop: theme.spacing.lg,
+    ...theme.shadows.large,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
+    borderColor: theme.colors.borderLight,
   },
   emptyIcon: { 
     fontSize: 64, 
-    marginBottom: 16 
+    marginBottom: theme.spacing.md 
   },
   emptyText: { 
-    color: '#FFFFFF', // Beyaz metin
-    fontSize: 18, 
-    fontWeight: '600',
-    textAlign: 'center'
+    color: theme.colors.white,
+    fontSize: theme.fontSizes.xxl, 
+    fontWeight: theme.fontWeights.semibold,
+    textAlign: 'center',
+    marginBottom: theme.spacing.sm,
   },
   emptySubtext: { 
-    color: 'rgba(255, 255, 255, 0.8)', // Şeffaf beyaz
-    fontSize: 14, 
+    color: theme.colors.textWhite + 'CC',
+    fontSize: theme.fontSizes.md, 
     textAlign: 'center',
-    paddingHorizontal: 32
+    paddingHorizontal: theme.spacing.xxl
   },
 
   // Skeleton Loading Styles
   skeletonCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: Math.min(width * 0.05, 15),
-    marginBottom: 16,
+    backgroundColor: theme.colors.white,
+    borderRadius: theme.borderRadius.lg,
+    marginBottom: theme.spacing.md,
     borderWidth: 2,
-    borderColor: 'rgba(19, 1, 57, 0.3)',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 12,
+    borderColor: theme.colors.border,
+    ...theme.shadows.large,
     overflow: 'hidden',
   },
 
   skeletonImage: {
     width: '100%',
     height: 200,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: theme.colors.progressBg,
   },
 
   skeletonContent: {
-    padding: 12,
+    padding: theme.spacing.md,
   },
 
   skeletonTitle: {
     height: 18,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 4,
-    marginBottom: 4,
+    backgroundColor: theme.colors.progressBg,
+    borderRadius: theme.borderRadius.xs,
+    marginBottom: theme.spacing.xs,
   },
 
   skeletonLocation: {
     height: 14,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 4,
-    marginBottom: 8,
+    backgroundColor: theme.colors.progressBg,
+    borderRadius: theme.borderRadius.xs,
+    marginBottom: theme.spacing.sm,
     width: '60%',
   },
 
   skeletonDetails: {
-    marginBottom: 8,
+    marginBottom: theme.spacing.sm,
   },
 
   skeletonDetail: {
     height: 12,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 4,
-    marginBottom: 4,
+    backgroundColor: theme.colors.progressBg,
+    borderRadius: theme.borderRadius.xs,
+    marginBottom: theme.spacing.xs,
     width: '40%',
   },
 
@@ -671,21 +652,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: theme.spacing.sm,
   },
 
   skeletonRoom: {
     width: 50,
     height: 20,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 4,
+    backgroundColor: theme.colors.progressBg,
+    borderRadius: theme.borderRadius.xs,
   },
 
   skeletonPrice: {
     width: 80,
     height: 16,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 4,
+    backgroundColor: theme.colors.progressBg,
+    borderRadius: theme.borderRadius.xs,
   },
 });
 

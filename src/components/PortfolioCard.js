@@ -1,8 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { theme } from '../theme/theme';
-
-const { width } = Dimensions.get('window');
 
 const PortfolioCard = ({ 
   portfolio, 

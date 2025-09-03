@@ -1,85 +1,72 @@
 // Abonelik sistemi için yardımcı fonksiyonlar
 
 /**
- * Abonelik planları
+ * Tüm abonelik planlarında ortak özellikler
+ */
+const COMMON_FEATURES = [
+  'Sınırsız Portföy Ekleme',
+  'Sınırsız Talep Ekleme',
+  'Talep Havuzu Erişimi',
+  '7/24 Destek',
+  'Gelişmiş Arama ve Filtreleme',
+  'İstatistik ve Raporlama',
+  'Öne Çıkan İlan Hakkı',
+  'WhatsApp Entegrasyonu',
+  'Özel Danışman Desteği',
+  'Gelişmiş Pazarlama Araçları',
+  'Web Sitesi Entegrasyonu',
+  'Eğitim ve Webinarlar',
+  'Öncelikli Destek',
+  'Özel Raporlama'
+];
+
+/**
+ * Abonelik planları - Tüm paketlerde aynı özellikler, sadece süre farkı
  */
 export const SUBSCRIPTION_PLANS = {
-  FREE: {
-    id: 'free',
-    name: 'Ücretsiz',
-    price: 0,
+  MONTHLY: {
+    id: 'monthly',
+    name: 'Aylık',
+    price: 199.00,
     currency: 'TRY',
     duration: 30, // gün
-    features: [
-      'Temel portföy yönetimi',
-      'Sınırlı eşleştirme önerileri',
-      'Temel arama ve filtreleme',
-      'E-posta bildirimleri'
-    ],
-    limits: {
-      maxPortfolios: 3,
-      maxMatches: 10,
-      maxSearches: 50
-    }
+    billing: '/ay',
+    features: COMMON_FEATURES,
+    popular: false,
+    discount: 0
   },
-  BASIC: {
-    id: 'basic',
-    name: 'Temel',
-    price: 99,
+  QUARTERLY: {
+    id: 'quarterly',
+    name: '3 Aylık',
+    price: 500.00,
     currency: 'TRY',
-    duration: 30,
-    features: [
-      'Gelişmiş portföy yönetimi',
-      'Sınırsız eşleştirme önerileri',
-      'Gelişmiş arama ve filtreleme',
-      'Öncelikli destek',
-      'İstatistikler ve raporlar'
-    ],
-    limits: {
-      maxPortfolios: 10,
-      maxMatches: 100,
-      maxSearches: 500
-    }
+    duration: 90,
+    billing: '/3 ay',
+    features: COMMON_FEATURES,
+    popular: true,
+    discount: 16 // 3 aylık %16 indirim
   },
-  PREMIUM: {
-    id: 'premium',
-    name: 'Premium',
-    price: 199,
+  SEMIANNUAL: {
+    id: 'semiannual',
+    name: '6 Aylık',
+    price: 990.00,
     currency: 'TRY',
-    duration: 30,
-    features: [
-      'Tüm temel özellikler',
-      'Sınırsız portföy',
-      'Öncelikli eşleştirme',
-      'Gelişmiş analitik',
-      '7/24 destek',
-      'API erişimi'
-    ],
-    limits: {
-      maxPortfolios: -1, // sınırsız
-      maxMatches: -1,
-      maxSearches: -1
-    }
+    duration: 180,
+    billing: '/6 ay',
+    features: COMMON_FEATURES,
+    popular: false,
+    discount: 17 // 6 aylık %17 indirim
   },
-  ENTERPRISE: {
-    id: 'enterprise',
-    name: 'Kurumsal',
-    price: 499,
+  YEARLY: {
+    id: 'yearly',
+    name: 'Yıllık Pro',
+    price: 1599.00,
     currency: 'TRY',
-    duration: 30,
-    features: [
-      'Tüm premium özellikler',
-      'Özel entegrasyonlar',
-      'Özel destek',
-      'Çoklu kullanıcı',
-      'Özel raporlama',
-      'White-label çözümler'
-    ],
-    limits: {
-      maxPortfolios: -1,
-      maxMatches: -1,
-      maxSearches: -1
-    }
+    duration: 365,
+    billing: '/yıl',
+    features: COMMON_FEATURES,
+    popular: false,
+    discount: 33 // Yıllık %33 indirim
   }
 };
 
@@ -101,7 +88,7 @@ export class SubscriptionRecord {
   constructor(data = {}) {
     this.id = data.id || '';
     this.userId = data.userId || '';
-    this.planId = data.planId || 'free';
+    this.planId = data.planId || 'monthly';
     this.status = data.status || SUBSCRIPTION_STATUS.ACTIVE;
     this.startDate = data.startDate ? new Date(data.startDate) : new Date();
     this.endDate = data.endDate ? new Date(data.endDate) : this.calculateEndDate();
@@ -109,7 +96,6 @@ export class SubscriptionRecord {
     this.paymentMethod = data.paymentMethod || null;
     this.transactions = data.transactions || [];
     this.features = data.features || [];
-    this.limits = data.limits || {};
     this.createdAt = data.createdAt ? new Date(data.createdAt) : new Date();
     this.updatedAt = data.updatedAt ? new Date(data.updatedAt) : new Date();
   }
@@ -139,28 +125,20 @@ export class SubscriptionRecord {
   }
 
   canUpgrade() {
-    return this.isActive() && this.planId !== 'enterprise';
+    return this.isActive() && this.planId !== 'yearly';
   }
 
   canDowngrade() {
-    return this.isActive() && this.planId !== 'free';
+    return this.isActive() && this.planId !== 'monthly';
   }
 
   getPlan() {
-    return SUBSCRIPTION_PLANS[this.planId.toUpperCase()] || SUBSCRIPTION_PLANS.FREE;
+    return SUBSCRIPTION_PLANS[this.planId.toUpperCase()] || SUBSCRIPTION_PLANS.MONTHLY;
   }
 
   hasFeature(feature) {
     const plan = this.getPlan();
     return plan.features.includes(feature);
-  }
-
-  checkLimit(limitType, currentValue = 0) {
-    const plan = this.getPlan();
-    const limit = plan.limits[limitType];
-    
-    if (limit === -1) return true; // sınırsız
-    return currentValue < limit;
   }
 
   toJSON() {
@@ -175,7 +153,6 @@ export class SubscriptionRecord {
       paymentMethod: this.paymentMethod,
       transactions: this.transactions,
       features: this.features,
-      limits: this.limits,
       createdAt: this.createdAt.toISOString(),
       updatedAt: this.updatedAt.toISOString()
     };
@@ -201,7 +178,7 @@ export class SubscriptionManager {
       const mockData = {
         id: 'sub_123',
         userId: this.userId,
-        planId: 'basic',
+        planId: 'monthly',
         status: SUBSCRIPTION_STATUS.ACTIVE,
         startDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000), // 15 gün önce
         autoRenew: true
@@ -326,6 +303,40 @@ export class SubscriptionManager {
   }
 
   /**
+   * Referans ödülü olarak gün ekle
+   */
+  async addReferralRewardDays(days) {
+    try {
+      if (!this.currentSubscription) {
+        throw new Error('No active subscription found');
+      }
+
+      // Mevcut bitiş tarihine gün ekle
+      const newEndDate = new Date(this.currentSubscription.endDate);
+      newEndDate.setDate(newEndDate.getDate() + days);
+      
+      this.currentSubscription.endDate = newEndDate;
+      this.currentSubscription.updatedAt = new Date();
+
+      // Firebase'e kaydet
+      // await this.saveSubscription(this.currentSubscription);
+
+      return {
+        success: true,
+        addedDays: days,
+        newEndDate: newEndDate,
+        message: `${days} gün referans ödülü olarak eklendi`
+      };
+    } catch (error) {
+      console.error('Error adding referral reward days:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
    * Abonelik özelliklerini kontrol eder
    */
   checkFeatureAccess(feature) {
@@ -336,23 +347,13 @@ export class SubscriptionManager {
   }
 
   /**
-   * Abonelik limitini kontrol eder
-   */
-  checkLimit(limitType, currentValue = 0) {
-    if (!this.currentSubscription) {
-      return false;
-    }
-    return this.currentSubscription.checkLimit(limitType, currentValue);
-  }
-
-  /**
    * Abonelik özetini getirir
    */
   getSubscriptionSummary() {
     if (!this.currentSubscription) {
       return {
         hasSubscription: false,
-        plan: SUBSCRIPTION_PLANS.FREE,
+        plan: SUBSCRIPTION_PLANS.MONTHLY,
         status: 'none',
         daysUntilExpiry: 0
       };
@@ -374,35 +375,58 @@ export class SubscriptionManager {
  */
 export const formatPrice = (price, currency = 'TRY') => {
   if (price === 0) return 'Ücretsiz';
-  return `${price} ${currency}`;
+  return `${price.toFixed(2)} ${currency}`;
 };
 
 export const getPlanById = (planId) => {
-  return SUBSCRIPTION_PLANS[planId.toUpperCase()] || SUBSCRIPTION_PLANS.FREE;
+  return SUBSCRIPTION_PLANS[planId.toUpperCase()] || SUBSCRIPTION_PLANS.MONTHLY;
 };
 
-export const getAvailablePlans = (currentPlanId = 'free') => {
-  const currentPlan = getPlanById(currentPlanId);
-  const currentPrice = currentPlan.price;
+
+
+
+
+/**
+ * Paket karşılaştırma ve indirim hesaplama
+ */
+export const calculatePackageComparison = () => {
+  const plans = Object.values(SUBSCRIPTION_PLANS);
   
-  return Object.values(SUBSCRIPTION_PLANS).filter(plan => {
-    if (plan.id === currentPlanId) return false;
-    if (plan.price <= currentPrice) return false; // sadece yükseltme seçenekleri
-    return true;
+  return plans.map(plan => {
+    const monthlyEquivalent = (plan.price / plan.duration) * 30;
+    const savings = plan.discount > 0 ? 
+      `%${plan.discount} tasarruf` : 
+      'Standart fiyat';
+    
+    // Güvenli originalPrice hesaplaması
+    let originalPrice = plan.price;
+    if (plan.discount && plan.discount > 0) {
+      originalPrice = (plan.price / (1 - plan.discount / 100));
+    }
+    
+    return {
+      ...plan,
+      monthlyEquivalent,
+      savings,
+      originalPrice: originalPrice
+    };
   });
 };
 
-export const calculateSavings = (currentPlanId, newPlanId) => {
-  const currentPlan = getPlanById(currentPlanId);
-  const newPlan = getPlanById(newPlanId);
+/**
+ * En uygun paketi öner
+ */
+export const getRecommendedPlan = (usagePattern = 'monthly') => {
+  const plans = Object.values(SUBSCRIPTION_PLANS);
   
-  if (currentPlan.price >= newPlan.price) return 0;
-  
-  const monthlySavings = newPlan.price - currentPlan.price;
-  const yearlySavings = monthlySavings * 12;
-  
-  return {
-    monthly: monthlySavings,
-    yearly: yearlySavings
-  };
+  switch (usagePattern) {
+    case 'short-term':
+      return plans.find(p => p.id === 'monthly');
+    case 'medium-term':
+      return plans.find(p => p.id === 'quarterly');
+    case 'long-term':
+      return plans.find(p => p.id === 'yearly');
+    default:
+      return plans.find(p => p.popular) || plans.find(p => p.id === 'quarterly');
+  }
 };

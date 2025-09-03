@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../theme/theme';
+import trialManager from '../utils/trialManager';
+import { SUBSCRIPTION_PLANS, getPlanById } from '../utils/subscription';
 
 const { width, height } = Dimensions.get('window');
 
@@ -18,14 +20,44 @@ const Subscription = () => {
   const navigation = useNavigation();
   const [fadeAnim] = useState(new Animated.Value(0));
   const [scaleAnim] = useState(new Animated.Value(0.8));
+  const [trialStatus, setTrialStatus] = useState(null);
+  const [subscription, setSubscription] = useState(null);
 
-  // Mock subscription data
-  const [subscription, setSubscription] = useState({
-    plan: 'Premium',
-    status: 'active',
-    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 gün sonra
-    startDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000), // 15 gün önce
-  });
+  useEffect(() => {
+    loadSubscriptionData();
+  }, []);
+
+  const loadSubscriptionData = async () => {
+    try {
+      // Deneme sürümü durumunu kontrol et
+      const trial = await trialManager.getTrialStatus();
+      setTrialStatus(trial);
+
+      // Eğer deneme sürümü aktifse, subscription'ı deneme sürümü olarak ayarla
+      if (trial.isActive) {
+        setSubscription({
+          plan: 'Deneme Sürümü',
+          planId: 'trial',
+          status: 'trial',
+          endDate: new Date(trial.trialData.endDate),
+          startDate: new Date(trial.trialData.startDate),
+          daysRemaining: trial.daysRemaining
+        });
+      } else {
+        // Gerçek abonelik verisi burada yüklenecek
+        setSubscription({
+          plan: 'Aylık',
+          planId: 'monthly',
+          status: 'active',
+          endDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), // 15 gün sonra
+          startDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000), // 15 gün önce
+          daysRemaining: 15
+        });
+      }
+    } catch (error) {
+      console.error('Abonelik verisi yüklenirken hata:', error);
+    }
+  };
 
   useEffect(() => {
     Animated.parallel([
@@ -43,8 +75,9 @@ const Subscription = () => {
     ]).start();
   }, [fadeAnim, scaleAnim]);
 
-  const isActive = subscription.status === 'active';
-  const daysRemaining = Math.ceil((subscription.endDate - new Date()) / (1000 * 60 * 60 * 24));
+  const isActive = subscription?.status === 'active' || subscription?.status === 'trial';
+  const daysRemaining = subscription?.daysRemaining || 
+    (subscription?.endDate ? Math.ceil((subscription.endDate - new Date()) / (1000 * 60 * 60 * 24)) : 0);
 
   const formatDate = (date) => {
     return date.toLocaleDateString('tr-TR', {
@@ -80,6 +113,23 @@ const Subscription = () => {
     );
   };
 
+  const getCurrentPlanDetails = () => {
+    if (subscription?.planId === 'trial') {
+      return {
+        name: 'Deneme Sürümü',
+        price: 'Ücretsiz',
+        features: ['Temel özellikler', 'Sınırlı kullanım', '7 gün süre']
+      };
+    }
+    
+    const plan = getPlanById(subscription?.planId || 'monthly');
+    return {
+      name: plan.name,
+      price: `${plan.price}₺`,
+      features: plan.features.slice(0, 8) // İlk 8 özelliği göster
+    };
+  };
+
   const renderStatusIcon = () => (
     <View style={[styles.statusIcon, isActive ? styles.statusIconActive : styles.statusIconExpired]}>
       <Text style={styles.statusIconText}>
@@ -88,56 +138,60 @@ const Subscription = () => {
     </View>
   );
 
-  const renderSubscriptionCard = () => (
-    <Animated.View 
-      style={[
-        styles.subscriptionCard,
-        { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }
-      ]}
-    >
-      {renderStatusIcon()}
-      
-      <Text style={styles.planName}>{subscription.plan}</Text>
-      
-      <Text style={[styles.statusText, isActive ? styles.statusTextActive : styles.statusTextExpired]}>
-        Durum: {isActive ? 'Aktif' : 'Süresi Dolmuş'}
-      </Text>
-
-      {isActive ? (
-        <View style={styles.dateInfo}>
-          <Text style={styles.dateText}>
-            Aboneliğinizin sona ermesine{' '}
-            <Text style={styles.daysRemaining}>{daysRemaining}</Text> gün kaldı.
-          </Text>
-          <Text style={styles.endDateText}>
-            Son geçerlilik tarihi: {formatDate(subscription.endDate)}
-          </Text>
-        </View>
-      ) : (
-        <View style={styles.dateInfo}>
-          <Text style={styles.dateText}>
-            Aboneliğiniz {formatDate(subscription.endDate)} tarihinde sona erdi.
-          </Text>
-        </View>
-      )}
-
-      <View style={styles.subscriptionActions}>
-        <TouchableOpacity style={styles.actionButton} onPress={handleUpgrade}>
-          <Text style={styles.actionButtonText}>
-            Paketleri İncele / Yükselt
-          </Text>
-        </TouchableOpacity>
+  const renderSubscriptionCard = () => {
+    const planDetails = getCurrentPlanDetails();
+    
+    return (
+      <Animated.View 
+        style={[
+          styles.subscriptionCard,
+          { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }
+        ]}
+      >
+        {renderStatusIcon()}
         
-        {isActive && (
-          <TouchableOpacity style={[styles.actionButton, styles.extendButton]} onPress={handleExtend}>
-            <Text style={[styles.actionButtonText, styles.extendButtonText]}>
-              Aboneliği Uzat
+        <Text style={styles.planName}>{planDetails.name}</Text>
+        
+        <Text style={[styles.statusText, isActive ? styles.statusTextActive : styles.statusTextExpired]}>
+          Durum: {subscription?.status === 'trial' ? 'Deneme Sürümü' : (isActive ? 'Aktif' : 'Süresi Dolmuş')}
+        </Text>
+
+        {isActive ? (
+          <View style={styles.dateInfo}>
+            <Text style={styles.dateText}>
+              Aboneliğinizin sona ermesine{' '}
+              <Text style={styles.daysRemaining}>{daysRemaining}</Text> gün kaldı.
+            </Text>
+            <Text style={styles.endDateText}>
+              Son geçerlilik tarihi: {formatDate(subscription.endDate)}
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.dateInfo}>
+            <Text style={styles.dateText}>
+              Aboneliğiniz {formatDate(subscription.endDate)} tarihinde sona erdi.
+            </Text>
+          </View>
+        )}
+
+        <View style={styles.subscriptionActions}>
+          <TouchableOpacity style={styles.actionButton} onPress={handleUpgrade}>
+            <Text style={styles.actionButtonText}>
+              Paketleri İncele / Yükselt
             </Text>
           </TouchableOpacity>
-        )}
-      </View>
-    </Animated.View>
-  );
+          
+          {isActive && subscription?.status !== 'trial' && (
+            <TouchableOpacity style={[styles.actionButton, styles.extendButton]} onPress={handleExtend}>
+              <Text style={[styles.actionButtonText, styles.extendButtonText]}>
+                Aboneliği Uzat
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </Animated.View>
+    );
+  };
 
   const renderNoSubscription = () => (
     <Animated.View 
@@ -170,6 +224,58 @@ const Subscription = () => {
     </Animated.View>
   );
 
+  const renderFeaturesList = () => {
+    const planDetails = getCurrentPlanDetails();
+    
+    return (
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Paket Özellikleri</Text>
+        
+        <View style={styles.featuresCard}>
+          {planDetails.features.map((feature, index) => (
+            <View key={index} style={styles.featureItem}>
+              <View style={styles.checkIcon}>
+                <Text style={styles.checkText}>✓</Text>
+              </View>
+              <Text style={styles.featureText}>{feature}</Text>
+            </View>
+          ))}
+          
+          {subscription?.status !== 'trial' && (
+            <View style={styles.moreFeatures}>
+              <Text style={styles.moreFeaturesText}>
+                +{getPlanById(subscription?.planId || 'monthly').features.length - 8} özellik daha
+              </Text>
+            </View>
+          )}
+        </View>
+      </View>
+    );
+  };
+
+  const renderUsageStats = () => (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>Kullanım İstatistikleri</Text>
+      
+      <View style={styles.statsContainer}>
+        <View style={styles.statCard}>
+          <Text style={styles.statNumber}>12</Text>
+          <Text style={styles.statLabel}>Portföy</Text>
+        </View>
+        
+        <View style={styles.statCard}>
+          <Text style={styles.statNumber}>45</Text>
+          <Text style={styles.statLabel}>Talep</Text>
+        </View>
+        
+        <View style={styles.statCard}>
+          <Text style={styles.statNumber}>89%</Text>
+          <Text style={styles.statLabel}>Eşleşme</Text>
+        </View>
+      </View>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -187,7 +293,7 @@ const Subscription = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Abonelik Durumum</Text>
           
-          {subscription ? renderSubscriptionCard() : renderNoSubscription()}
+          {subscription && subscription.plan !== 'Abonelik Yok' ? renderSubscriptionCard() : renderNoSubscription()}
         </View>
 
         <View style={styles.section}>
@@ -197,6 +303,13 @@ const Subscription = () => {
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Plan:</Text>
               <Text style={styles.detailValue}>{subscription?.plan || 'Tanımlı değil'}</Text>
+            </View>
+            
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Fiyat:</Text>
+              <Text style={styles.detailValue}>
+                {getCurrentPlanDetails().price}
+              </Text>
             </View>
             
             <View style={styles.detailRow}>
@@ -216,11 +329,14 @@ const Subscription = () => {
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Kalan Gün:</Text>
               <Text style={styles.detailValue}>
-                {isActive ? `${daysRemaining} gün` : 'Süresi dolmuş'}
+                {subscription?.status === 'trial' ? `${daysRemaining} gün (Deneme)` : (isActive ? `${daysRemaining} gün` : 'Süresi dolmuş')}
               </Text>
             </View>
           </View>
         </View>
+
+        {renderFeaturesList()}
+        {renderUsageStats()}
 
         {isActive && (
           <View style={styles.section}>
@@ -313,7 +429,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: theme.colors.text,
     marginBottom: theme.spacing.sm,
-
   },
   statusText: {
     fontSize: 16,
@@ -400,6 +515,73 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: theme.colors.text,
     fontWeight: '600',
+  },
+  featuresCard: {
+    backgroundColor: theme.colors.cardBg,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+  },
+  checkIcon: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#10b981',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: theme.spacing.md,
+  },
+  checkText: {
+    color: theme.colors.white,
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  featureText: {
+    fontSize: 16,
+    color: theme.colors.text,
+    flex: 1,
+  },
+  moreFeatures: {
+    alignItems: 'center',
+    marginTop: theme.spacing.md,
+    paddingTop: theme.spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  moreFeaturesText: {
+    fontSize: 14,
+    color: theme.colors.primary,
+    fontWeight: '600',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: theme.colors.cardBg,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: theme.colors.primary,
+    marginBottom: theme.spacing.xs,
+  },
+  statLabel: {
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
   },
 });
 

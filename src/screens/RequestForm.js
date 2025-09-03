@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   TextInput,
   StyleSheet,
-  Dimensions,
   Alert,
   Animated,
   Modal,
@@ -16,8 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { theme } from '../theme/theme';
 import { addRequest } from '../services/firestore';
-
-const { width, height } = Dimensions.get('window');
+import reminderScheduler from '../services/reminderScheduler';
 
 const RequestForm = () => {
   const navigation = useNavigation();
@@ -139,6 +137,20 @@ const RequestForm = () => {
       const result = await addRequest(requestData, user.uid);
 
       if (result.success) {
+        // Bildirim sistemine talebi ekle
+        const requestForReminder = {
+          ...requestData,
+          id: result.requestId || Date.now().toString(),
+          userId: user.uid,
+          userName: formData.name || user.displayName || user.email || 'Kullanıcı',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          isPublished: formData.publishToPool,
+          title: requestData.title
+        };
+        
+        await reminderScheduler.addRequest(requestForReminder);
+        
         console.log('Request submitted successfully:', result.request);
         setShowSuccessModal(true);
       }
@@ -401,8 +413,8 @@ const RequestForm = () => {
               <Switch
                 value={formData.publishToPool}
                 onValueChange={(value) => handleInputChange('publishToPool', value)}
-                trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
-                thumbColor={theme.colors.white}
+                trackColor={{ false: theme.colors.borderLight, true: theme.colors.primary }}
+                thumbColor={theme.colors.textWhite}
               />
             </View>
           </View>
@@ -421,7 +433,7 @@ const RequestForm = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.primary,
   },
   header: {
     flexDirection: 'row',
@@ -430,63 +442,80 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.md,
     paddingTop: 50,
+    backgroundColor: theme.colors.primary,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    borderBottomColor: theme.colors.borderLight,
   },
   backButton: {
     padding: theme.spacing.sm,
   },
   backIcon: {
-    fontSize: 24,
+    fontSize: theme.fontSizes.xxl,
     color: theme.colors.text,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: theme.colors.text,
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.bold,
+    color: theme.colors.textWhite,
   },
   placeholder: {
     width: 40,
   },
   content: {
     flex: 1,
-    padding: theme.spacing.lg,
+    padding: 0,
   },
   section: {
     marginBottom: theme.spacing.xl,
+    backgroundColor: theme.colors.cardBg,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    marginHorizontal: theme.spacing.lg,
+    ...theme.shadows.medium,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.bold,
     color: theme.colors.text,
-    marginBottom: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+    paddingBottom: theme.spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.borderLight,
   },
   sectionDescription: {
-    fontSize: 16,
+    fontSize: theme.fontSizes.xl,
     color: theme.colors.textSecondary,
     lineHeight: 24,
     marginBottom: theme.spacing.lg,
   },
   inputContainer: {
     marginBottom: theme.spacing.lg,
-  },
-  inputLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.text,
-    marginBottom: theme.spacing.sm,
-  },
-  input: {
     backgroundColor: theme.colors.inputBg,
-    borderWidth: 1,
-    borderColor: theme.colors.inputBorder,
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
+  },
+  inputLabel: {
+    fontSize: theme.fontSizes.xl,
+    fontWeight: theme.fontWeights.semibold,
     color: theme.colors.text,
-    fontSize: 16,
+    marginBottom: theme.spacing.md,
+  },
+  input: {
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    color: theme.colors.text,
+    fontSize: theme.fontSizes.xl,
+    padding: 0,
   },
   statusToggleContainer: {
     marginBottom: theme.spacing.lg,
+    backgroundColor: theme.colors.inputBg,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
   },
   statusToggleButtons: {
     flexDirection: 'row',
@@ -496,42 +525,51 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: theme.colors.borderLight,
     borderRadius: theme.borderRadius.md,
     paddingVertical: theme.spacing.md,
     alignItems: 'center',
+    marginHorizontal: theme.spacing.xs,
   },
   statusButtonActive: {
     backgroundColor: theme.colors.primary,
     borderColor: theme.colors.primary,
   },
   statusButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: theme.fontSizes.xl,
+    fontWeight: theme.fontWeights.semibold,
     color: theme.colors.text,
   },
   statusButtonTextActive: {
-    color: theme.colors.white,
+    color: theme.colors.textWhite,
   },
   pickerContainer: {
-    backgroundColor: theme.colors.inputBg,
-    borderWidth: 1,
-    borderColor: theme.colors.inputBorder,
+    backgroundColor: 'transparent',
+    borderWidth: 0,
     borderRadius: theme.borderRadius.md,
   },
   pickerButton: {
     padding: theme.spacing.md,
+    backgroundColor: theme.colors.inputBg,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
   },
   pickerButtonText: {
-    fontSize: 16,
+    fontSize: theme.fontSizes.xl,
     color: theme.colors.text,
   },
   sliderContainer: {
     marginBottom: theme.spacing.lg,
+    backgroundColor: theme.colors.inputBg,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
   },
   sliderLabel: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: theme.fontSizes.xl,
+    fontWeight: theme.fontWeights.semibold,
     color: theme.colors.text,
     marginBottom: theme.spacing.sm,
   },
@@ -541,7 +579,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
   rangeLabel: {
-    fontSize: 14,
+    fontSize: theme.fontSizes.md,
     color: theme.colors.textSecondary,
   },
   sliderTrack: {
@@ -579,29 +617,29 @@ const styles = StyleSheet.create({
   },
   addMoreButtonText: {
     color: theme.colors.primary,
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: theme.fontSizes.xl,
+    fontWeight: theme.fontWeights.semibold,
   },
   switchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: theme.colors.cardBg,
+    backgroundColor: theme.colors.inputBg,
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.lg,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: theme.colors.borderLight,
   },
   switchLabel: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: theme.fontSizes.xl,
+    fontWeight: theme.fontWeights.semibold,
     color: theme.colors.text,
     flex: 1,
   },
   switchDescription: {
-    fontSize: 14,
+    fontSize: theme.fontSizes.md,
     color: theme.colors.textSecondary,
-    marginTop: 4,
+    marginTop: theme.spacing.xs,
   },
   submitButton: {
     backgroundColor: theme.colors.primary,
@@ -609,15 +647,18 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
     alignItems: 'center',
     marginTop: theme.spacing.xl,
+    marginHorizontal: theme.spacing.lg,
+    marginBottom: theme.spacing.xxl,
+    ...theme.shadows.medium,
   },
   submitButtonText: {
-    color: theme.colors.white,
-    fontSize: 18,
-    fontWeight: '600',
+    color: theme.colors.textWhite,
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.semibold,
   },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: theme.colors.overlay,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -634,24 +675,24 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#10b981',
+    backgroundColor: theme.colors.success,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: theme.spacing.lg,
   },
   successIconText: {
     fontSize: 40,
-    color: theme.colors.white,
-    fontWeight: 'bold',
+    color: theme.colors.textWhite,
+    fontWeight: theme.fontWeights.bold,
   },
   modalTitle: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontSize: theme.fontSizes.xxxl,
+    fontWeight: theme.fontWeights.bold,
     color: theme.colors.text,
     marginBottom: theme.spacing.md,
   },
   modalMessage: {
-    fontSize: 16,
+    fontSize: theme.fontSizes.xl,
     color: theme.colors.textSecondary,
     textAlign: 'center',
     lineHeight: 24,

@@ -11,15 +11,17 @@ import {
   Dimensions,
   ScrollView,
   Animated,
-  LinearGradient,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../theme/theme';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import SubscriptionGuard from '../components/SubscriptionGuard';
 
 const { width, height } = Dimensions.get('window');
 
 const Home = () => {
   const navigation = useNavigation();
+  const [unreadCount, setUnreadCount] = useState(0);
   
   // Business kalitesinde animasyonlar
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -55,6 +57,32 @@ const Home = () => {
       }),
     ]).start();
   }, [fadeAnim, slideUpAnim, scaleAnim, headerSlideAnim]);
+
+  // Okunmamış bildirim sayısını yükle
+  useEffect(() => {
+    loadUnreadCount();
+    
+    // Her 5 saniyede bir güncelle
+    const interval = setInterval(loadUnreadCount, 5000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  const loadUnreadCount = async () => {
+    try {
+      const storedNotifications = await AsyncStorage.getItem('notifications');
+      if (storedNotifications) {
+        const notifications = JSON.parse(storedNotifications);
+        const unreadNotifications = notifications.filter(notification => !notification.isRead);
+        setUnreadCount(unreadNotifications.length);
+      } else {
+        setUnreadCount(0);
+      }
+    } catch (error) {
+      console.error('Okunmamış bildirim sayısı yüklenirken hata:', error);
+      setUnreadCount(0);
+    }
+  };
 
   const getIconSource = (iconName) => {
     const iconMap = {
@@ -97,115 +125,121 @@ const Home = () => {
   );
 
   return (
-    <View style={styles.container}>
-      {/* Arka Plan */}
-      <View style={styles.backgroundContainer}>
-        <Image source={require('../assets/images/dark-bg.jpg')} style={styles.backgroundImage} />
-      </View>
-
-      {/* Header - Logo ve Bildirim */}
-      <Animated.View 
-        style={[
-          styles.header,
-          {
-            transform: [{ translateY: headerSlideAnim }]
-          }
-        ]}
-      >
-        <View style={styles.headerLeft}>
-          <Image source={require('../assets/images/logo.png')} style={styles.logo} />
+    <SubscriptionGuard>
+      <View style={styles.container}>
+        {/* Arka Plan */}
+        <View style={styles.backgroundContainer}>
+          <Image source={require('../assets/images/dark-bg.jpg')} style={styles.backgroundImage} />
         </View>
-        <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.notificationButton}>
-            <Image source={require('../assets/images/notification.png')} style={styles.notificationIcon} />
-          </TouchableOpacity>
-        </View>
-      </Animated.View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <Animated.View style={{ 
-          opacity: fadeAnim,
-          transform: [
-            { translateY: slideUpAnim },
-            { scale: scaleAnim }
-          ]
-        }}>
-          {/* Görev Kartı - Resimdeki gibi beyaz */}
-          <View style={styles.taskCard}>
-            {/* Kartın Üst Bölümü - Görev Metni ve İlerleme */}
-            <View style={styles.taskHeader}>
-              <Text style={styles.taskTitle}>Bu gün tamamladığın görevler...</Text>
-              <View style={styles.progressContainer}>
-                <Text style={styles.progressText}>%67</Text>
-                <View style={styles.progressArc}>
-                  <View style={styles.progressFill} />
+        {/* Header - Logo ve Bildirim */}
+        <Animated.View 
+          style={[
+            styles.header,
+            {
+              transform: [{ translateY: headerSlideAnim }]
+            }
+          ]}
+        >
+          <View style={styles.headerLeft}>
+            <Image source={require('../assets/images/logo.png')} style={styles.logo} />
+          </View>
+          <View style={styles.headerRight}>
+            <TouchableOpacity 
+              style={styles.notificationButton}
+              onPress={() => navigation.navigate('Notifications')}
+            >
+              <Image source={require('../assets/images/notification.png')} style={styles.notificationIcon} />
+              {unreadCount > 0 && (
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.notificationBadgeText}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </Text>
                 </View>
-              </View>
-            </View>
-            
-            {/* Ayırıcı Çizgi */}
-            <View style={styles.divider} />
-            
-            {/* İlk Satır İkonları - 4 adet */}
-            <View style={styles.iconRow}>
-              {renderTaskIcon('ajandaicon', 'Ajanda', () => navigation.navigate('Calendar'))}
-              {renderTaskIcon('notlaricon', 'Notlarım', () => navigation.navigate('Notes'))}
-              {renderTaskIcon('gorevlericon', 'Görevler', () => navigation.navigate('Tasks'))}
-              {renderTaskIcon('haberlericon', 'Haberler', () => navigation.navigate('News'))}
-            </View>
-
-          </View>
-
-          {/* Alt İkonlar Container - Ayrı beyaz kart */}
-          <View style={styles.bottomIconsCard}>
-            <View style={styles.bottomIconsRow}>
-              {renderBottomIcon('rediicon', 'Kredi Hesaplama', () => navigation.navigate('CreditCalculation'))}
-              {renderBottomIcon('favicon', 'Favori Talepler', () => navigation.navigate('FavoriteRequests'))}
-              {renderBottomIcon('destekicon', 'Müşteri Destek', () => navigation.navigate('CustomerSupport'))}
-              {renderBottomIcon('favporticon', 'Favori Portföyler', () => navigation.navigate('FavoritePortfolios'))}
-              {renderBottomIcon('komisyonicon', 'Komisyon Hesaplama', () => navigation.navigate('CommissionCalculation'))}
-            </View>
-          </View>
-
-          {/* Yeni Büyük Container - Koyu mor şeffaf */}
-          <View style={styles.newLargeContainer}>
-            <Text style={styles.newContainerTitle}>Yeni İçerik Alanı</Text>
-            <Text style={styles.newContainerSubtitle}>Buraya istediğiniz içeriği ekleyebilirsiniz</Text>
-          </View>
-
-          {/* Navigasyon Butonları - Talep Havuzu ve Portföy Havuzu */}
-          <View style={styles.navigationButtonsContainer}>
-            <TouchableOpacity 
-              style={styles.navigationButton}
-              onPress={() => navigation.navigate('PortfolioList')}
-              activeOpacity={0.8}
-            >
-              <View style={styles.buttonIconContainer}>
-                <Image 
-                  source={require('../assets/images/porfoyhavuz.png')} 
-                  style={styles.buttonIcon}
-                />
-              </View>
-              <Text style={styles.buttonTitle}>Portföy Havuzu</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.navigationButton}
-              onPress={() => navigation.navigate('DemandPool')}
-              activeOpacity={0.8}
-            >
-              <View style={styles.buttonIconContainer}>
-                <Image 
-                  source={require('../assets/images/talephavuz.png')} 
-                  style={styles.buttonIcon}
-                />
-              </View>
-              <Text style={styles.buttonTitle}>Talep Havuzu</Text>
+              )}
             </TouchableOpacity>
           </View>
         </Animated.View>
-      </ScrollView>
-    </View>
+
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <Animated.View style={{ 
+            opacity: fadeAnim,
+            transform: [
+              { translateY: slideUpAnim },
+              { scale: scaleAnim }
+            ]
+          }}>
+            {/* Görev Kartı - Resimdeki gibi beyaz */}
+            <View style={styles.taskCard}>
+              {/* Kartın Üst Bölümü - Görev Metni ve İlerleme */}
+              <View style={styles.taskHeader}>
+                <Text style={styles.taskTitle}>Bu gün tamamladığın görevler...</Text>
+                <View style={styles.progressContainer}>
+                  <Text style={styles.progressText}>%67</Text>
+                  <View style={styles.progressArc}>
+                    <View style={styles.progressFill} />
+                  </View>
+                </View>
+              </View>
+              
+              {/* Ayırıcı Çizgi */}
+              <View style={styles.divider} />
+              
+              {/* İlk Satır İkonları - 4 adet */}
+              <View style={styles.iconRow}>
+                {renderTaskIcon('ajandaicon', 'Ajanda', () => navigation.navigate('Calendar'))}
+                {renderTaskIcon('notlaricon', 'Notlarım', () => navigation.navigate('Profile'))}
+                {renderTaskIcon('gorevlericon', 'Görevler', () => navigation.navigate('RequestList'))}
+                {renderTaskIcon('haberlericon', 'Haberler', () => navigation.navigate('Settings'))}
+              </View>
+
+            </View>
+
+            {/* Alt İkonlar Container - Ayrı beyaz kart */}
+            <View style={styles.bottomIconsCard}>
+              <View style={styles.bottomIconsRow}>
+                {renderBottomIcon('rediicon', 'Kredi Hesaplama', () => navigation.navigate('Settings'))}
+                {renderBottomIcon('favicon', 'Favori Talepler', () => navigation.navigate('RequestList'))}
+                {renderBottomIcon('destekicon', 'Müşteri Destek', () => navigation.navigate('Settings'))}
+                {renderBottomIcon('favporticon', 'Favori Portföyler', () => navigation.navigate('MyPortfolios'))}
+                {renderBottomIcon('komisyonicon', 'Komisyon Hesaplama', () => navigation.navigate('Settings'))}
+              </View>
+            </View>
+
+            {/* Navigasyon Butonları - Talep Havuzu ve Portföy Havuzu */}
+            <View style={styles.navigationButtonsContainer}>
+              <TouchableOpacity 
+                style={styles.navigationButton}
+                onPress={() => navigation.navigate('PortfolioList')}
+                activeOpacity={0.8}
+              >
+                <View style={styles.buttonIconContainer}>
+                  <Image 
+                    source={require('../assets/images/porfoyhavuz.png')} 
+                    style={styles.buttonIcon}
+                  />
+                </View>
+                <Text style={styles.buttonTitle}>Portföy Havuzu</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.navigationButton}
+                onPress={() => navigation.navigate('DemandPool')}
+                activeOpacity={0.8}
+              >
+                <View style={styles.buttonIconContainer}>
+                  <Image 
+                    source={require('../assets/images/talephavuz.png')} 
+                    style={styles.buttonIcon}
+                  />
+                </View>
+                <Text style={styles.buttonTitle}>Talep Havuzu</Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        </ScrollView>
+      </View>
+    </SubscriptionGuard>
   );
 };
 
@@ -264,6 +298,27 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     tintColor: '#ffffff',
+  },
+
+  notificationBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#FF3B30',
+    borderRadius: 12,
+    minWidth: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+
+  notificationBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
   
   // Ana İçerik
@@ -418,41 +473,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
-  // Yeni Büyük Container Stilleri
-  newLargeContainer: {
-    backgroundColor: 'rgba(19, 1, 57, 0.85)', // Biraz daha opak
-    borderRadius: 15,
-    padding: 20,
-    marginTop: 5,
-    marginBottom: 0, // Tamamen kaldırdım - butonları aşağıya indirmek için
-    marginHorizontal: 0,
-    minHeight: 120,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 15,
-    zIndex: 5,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
-  },
-
-  newContainerTitle: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 15,
-  },
-
-  newContainerSubtitle: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 14,
-    textAlign: 'center',
-    fontWeight: '400',
-    lineHeight: 20,
-  },
-
   // Navigasyon Butonları
   navigationButtonsContainer: {
     flexDirection: 'row',
@@ -505,13 +525,6 @@ const styles = StyleSheet.create({
     textAlign: 'left', // Sola hizala
     marginBottom: 0, // Alt margin'i kaldır
     flex: 1, // Kalan alanı kapla
-  },
-
-  buttonSubtitle: {
-    fontSize: 12,
-    color: 'rgba(19, 1, 57, 0.7)',
-    textAlign: 'center',
-    lineHeight: 16,
   },
 
 });

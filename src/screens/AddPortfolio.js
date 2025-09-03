@@ -6,9 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Dimensions,
   Alert,
-  Image,
   Modal,
   Switch,
 } from 'react-native';
@@ -17,8 +15,6 @@ import { useAuth } from '../context/AuthContext';
 import { theme } from '../theme/theme';
 import { addPortfolio } from '../services/firestore';
 import MapPicker from '../components/MapPicker';
-
-const { width } = Dimensions.get('window');
 
 const AddPortfolio = () => {
   const navigation = useNavigation();
@@ -63,6 +59,55 @@ const AddPortfolio = () => {
     }));
   };
 
+  // Resim yükleme fonksiyonu (Cloudinary ile - fetch API)
+  const handleImageUpload = async (imageUri) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', {
+        uri: imageUri,
+        type: 'image/jpeg',
+        name: `portfolio_${Date.now()}.jpg`
+      });
+      formData.append('upload_preset', 'armenkuL_preset');
+      
+      const response = await fetch(
+        'https://api.cloudinary.com/v1_1/dutsz2qlo/image/upload',
+        {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const responseData = await response.json();
+      
+      if (!responseData.secure_url) {
+        throw new Error('Cloudinary\'den geçerli URL alınamadı');
+      }
+      
+      const uploadedImageUrl = responseData.secure_url;
+      console.log('Resim Cloudinary\'ye yüklendi:', uploadedImageUrl);
+      
+      // Resmi form verilerine ekle
+      setFormData(prev => ({
+        ...prev,
+        images: [...prev.images, uploadedImageUrl]
+      }));
+      
+      return uploadedImageUrl;
+    } catch (error) {
+      console.error('Resim yükleme hatası:', error);
+      Alert.alert('Hata', 'Resim yüklenemedi: ' + error.message);
+      return null;
+    }
+  };
+
   const handleSubmit = async () => {
     if (!formData.title || !formData.price || !formData.squareMeters) {
       Alert.alert('Hata', 'Lütfen zorunlu alanları doldurun (Başlık, Fiyat, Metrekare)');
@@ -90,8 +135,8 @@ const AddPortfolio = () => {
       // Servise gönder
       const result = await addPortfolio(portfolioData, user.uid);
       
-      if (result.success) {
-        Alert.alert(
+              if (result.success) {
+          Alert.alert(
           'Başarılı!',
           `Portföy başarıyla kaydedildi ve ${formData.isPublished ? 'yayınlandı' : 'gizlendi'}.`,
           [
@@ -104,7 +149,7 @@ const AddPortfolio = () => {
       }
     } catch (error) {
       console.error('Error adding portfolio:', error);
-      Alert.alert('Hata', 'Portföy kaydedilirken bir hata oluştu.');
+      Alert.alert('Hata', 'Portföy kaydedilirken bir hata oluştu: ' + error.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -351,7 +396,8 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.md,
     paddingTop: 50,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    borderBottomColor: theme.colors.borderDark,
+    backgroundColor: theme.colors.cardBg,
   },
   
   backButton: {
@@ -364,8 +410,8 @@ const styles = StyleSheet.create({
   },
   
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.bold,
     color: theme.colors.text,
   },
   
@@ -380,11 +426,17 @@ const styles = StyleSheet.create({
   
   section: {
     marginBottom: theme.spacing.xl,
+    backgroundColor: theme.colors.cardBg,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    ...theme.shadows.medium,
   },
   
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.semibold,
     color: theme.colors.text,
     marginBottom: theme.spacing.md,
   },
@@ -394,14 +446,14 @@ const styles = StyleSheet.create({
   },
   
   inputLabel: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: theme.fontSizes.xl,
+    fontWeight: theme.fontWeights.medium,
     color: theme.colors.text,
     marginBottom: theme.spacing.sm,
   },
   
   required: {
-    color: '#ff0000',
+    color: theme.colors.error,
   },
   
   input: {
@@ -410,8 +462,8 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.inputBorder,
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.md,
-    color: theme.colors.text,
-    fontSize: 16,
+    color: theme.colors.inputText,
+    fontSize: theme.fontSizes.xxl,
   },
   
   pickerContainer: {
@@ -426,18 +478,18 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: theme.colors.white,
   },
   
   pickerOptionActive: {
-    backgroundColor: '#ff0000',
-    borderColor: '#ff0000',
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
   },
   
   pickerOptionText: {
     color: theme.colors.text,
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: theme.fontSizes.xl,
+    fontWeight: theme.fontWeights.medium,
   },
   
   pickerOptionTextActive: {
@@ -459,11 +511,12 @@ const styles = StyleSheet.create({
     marginRight: theme.spacing.sm,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: theme.colors.white,
   },
   
   checkboxActive: {
-    backgroundColor: '#ff0000',
-    borderColor: '#ff0000',
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
   },
   
   checkboxIcon: {
@@ -473,7 +526,7 @@ const styles = StyleSheet.create({
   },
   
   checkboxLabel: {
-    fontSize: 16,
+    fontSize: theme.fontSizes.xxl,
     color: theme.colors.text,
   },
   
@@ -483,10 +536,11 @@ const styles = StyleSheet.create({
   },
   
   submitButton: {
-    backgroundColor: '#ff0000',
+    backgroundColor: theme.colors.primary,
     paddingVertical: theme.spacing.lg,
     borderRadius: theme.borderRadius.md,
     alignItems: 'center',
+    ...theme.shadows.large,
   },
   
   submitButtonDisabled: {
@@ -495,29 +549,36 @@ const styles = StyleSheet.create({
   
   submitButtonText: {
     color: theme.colors.white,
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.semibold,
   },
+  
   locationContainer: {
     marginTop: theme.spacing.md,
   },
+  
   mapButton: {
     backgroundColor: theme.colors.primary,
     paddingVertical: theme.spacing.md,
     borderRadius: theme.borderRadius.md,
     alignItems: 'center',
     marginTop: theme.spacing.sm,
+    ...theme.shadows.small,
   },
+  
   mapButtonText: {
     color: theme.colors.white,
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.semibold,
   },
+  
   coordinatesDisplay: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: theme.colors.white,
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.sm,
     marginTop: theme.spacing.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
 
   switchContainer: {
@@ -529,13 +590,13 @@ const styles = StyleSheet.create({
   },
 
   switchLabel: {
-    fontSize: 16,
+    fontSize: theme.fontSizes.xxl,
     color: theme.colors.text,
-    fontWeight: '500',
+    fontWeight: theme.fontWeights.medium,
   },
 
   switchDescription: {
-    fontSize: 14,
+    fontSize: theme.fontSizes.xl,
     color: theme.colors.textSecondary,
     textAlign: 'center',
     marginBottom: theme.spacing.md,
@@ -544,13 +605,15 @@ const styles = StyleSheet.create({
 
   coordinatesText: {
     color: theme.colors.text,
-    fontSize: 12,
+    fontSize: theme.fontSizes.md,
     fontFamily: 'monospace',
   },
+  
   mapModalContainer: {
     flex: 1,
     backgroundColor: theme.colors.background,
   },
+  
   mapModalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -559,20 +622,25 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.md,
     paddingTop: 50,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    borderBottomColor: theme.colors.borderDark,
+    backgroundColor: theme.colors.cardBg,
   },
+  
   mapModalCloseButton: {
     padding: theme.spacing.sm,
   },
+  
   mapModalCloseText: {
     fontSize: 24,
     color: theme.colors.text,
   },
+  
   mapModalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: theme.fontSizes.xxl,
+    fontWeight: theme.fontWeights.bold,
     color: theme.colors.text,
   },
+  
   mapModalPlaceholder: {
     width: 40,
   },
